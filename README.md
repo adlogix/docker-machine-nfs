@@ -22,4 +22,4 @@ docker-machine-nfs <machine-name> [--force]
 
 ## Credits
 
-heavily inspired by @mattes ruby version (https://gist.github.com/mattes/4d7f435d759ca2581347)
+Heavily inspired by @[mattes](https://github.com/mattes) ruby version (https://gist.github.com/mattes/4d7f435d759ca2581347)
