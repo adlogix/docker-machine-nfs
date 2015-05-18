@@ -19,3 +19,7 @@ docker-machine-nfs <machine-name> [--force]
 ## Demo
 
 [![asciicast](https://asciinema.org/a/20224.png)](https://asciinema.org/a/20224)
+
+## Credits
+
+heavily inspired by @mattes ruby version (https://gist.github.com/mattes/4d7f435d759ca2581347)
