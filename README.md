@@ -18,4 +18,4 @@ docker-machine-nfs <machine-name> [--force]
 
 ## Demo
 
-![Docker Machine NFS](https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/readme_image.gif)
+[![asciicast](https://asciinema.org/a/20224.png)](https://asciinema.org/a/20224)
