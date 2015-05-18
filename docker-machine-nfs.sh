@@ -96,7 +96,7 @@ checkMachineRunning ()
 {
     echoInfo "machine running ... \t\t\t"
     
-    machine_state=$(docker-machine ls | sed 's/\*//g' | sed 's/  */:/g' | grep $1: | cut -d ':' -f3)
+    machine_state=$(docker-machine ls | sed 's/\*//g' | sed 's/  */:/g' | grep ^$1: | cut -d ':' -f3)
     
     if [ "Running" != "${machine_state}" ]; then
         echoError "The machine '$1' is not running but '${machine_state}'!"; exit 1;
