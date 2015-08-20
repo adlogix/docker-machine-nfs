@@ -182,7 +182,7 @@ restartBoot2Docker()
 # @return:  'true', if NFS is mounted; else 'false'  
 isNFSMounted()
 {
-    local nfs_mount=$(docker-machine ssh $prop_machine_name df | grep "$prop_machine_vboxnet_ip:/Users")
+    local nfs_mount=$(docker-machine ssh $prop_machine_name "df || true" | grep "$prop_machine_vboxnet_ip:/Users")
     if [ "" = "$nfs_mount" ]; then echo "false"; else echo "true"; fi
 }
 
