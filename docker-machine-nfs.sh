@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-set -x
 set -o errexit
 
 # BEGIN _functions
