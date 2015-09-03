@@ -190,7 +190,6 @@ isNFSMounted()
 verifyNFSMount()
 {
     echoInfo "Verify NFS mount ... \t\t\t"
-    sleep 10
     
     if [ "$(isNFSMounted)" = "false" ]; then
         echoError "Cannot detect the NFS mount :("; exit 1
