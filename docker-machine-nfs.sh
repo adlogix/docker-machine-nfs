@@ -157,7 +157,7 @@ configureBoot2Docker()
     # render bootlocal.sh and copy bootlocal.sh over to boot2docker
     # (this will override an existing /var/lib/boot2docker/bootlocal.sh)
     
-    local bootlocalsh='#/bin/bash
+    local bootlocalsh='#!/bin/sh
     sudo umount /Users
     sudo /usr/local/etc/init.d/nfs-client start
     sudo mount -t nfs -o noacl,async '$prop_machine_vboxnet_ip':/Users /Users'
