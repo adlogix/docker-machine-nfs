@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+set -x
 set -o errexit
 
 # BEGIN _functions
@@ -157,7 +158,7 @@ configureBoot2Docker()
     # render bootlocal.sh and copy bootlocal.sh over to boot2docker
     # (this will override an existing /var/lib/boot2docker/bootlocal.sh)
     
-    local bootlocalsh='#/bin/bash
+    local bootlocalsh='#!/bin/sh
     sudo umount /Users
     sudo /usr/local/etc/init.d/nfs-client start
     sudo mount -t nfs -o noacl,async '$prop_machine_vboxnet_ip':/Users /Users'
@@ -190,6 +191,7 @@ isNFSMounted()
 verifyNFSMount()
 {
     echoInfo "Verify NFS mount ... \t\t\t"
+    sleep 10
     
     if [ "$(isNFSMounted)" = "false" ]; then
         echoError "Cannot detect the NFS mount :("; exit 1
