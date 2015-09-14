@@ -160,7 +160,7 @@ configureBoot2Docker()
     local bootlocalsh='#!/bin/sh
     sudo umount /Users
     sudo /usr/local/etc/init.d/nfs-client start
-    sudo mount -t nfs -o noacl,async,actimeo=0 '$prop_machine_vboxnet_ip':/Users /Users'
+    sudo mount -t nfs -o noacl,async '$prop_machine_vboxnet_ip':/Users /Users'
 
     docker-machine ssh $prop_machine_name "echo '$bootlocalsh' | sudo tee /var/lib/boot2docker/bootlocal.sh && sudo chmod +x /var/lib/boot2docker/bootlocal.sh" > /dev/null
     
