@@ -146,15 +146,15 @@ configureNFS()
     echoSuccess "\t\t\t\t\t\tOK"
 }
 
-# @info:    Configures the Boot2Docker to mount nfs
+# @info:    Configures the VirtualBox Docker Machine (i.e. boot2docker) to mount nfs
 configureBoot2Docker()
 {
-    echoInfo "Configure Boot2Docker ... \t\t"
+    echoInfo "Configure Docker Machine ... \t\t"
 
     if isPropertyNotSet $prop_machine_name; then echoError "'prop_machine_name' not set!"; exit 1; fi
     if isPropertyNotSet $prop_machine_vboxnet_ip; then echoError "'prop_machine_vboxnet_ip' not set!"; exit 1; fi
 
-    # render bootlocal.sh and copy bootlocal.sh over to boot2docker
+    # render bootlocal.sh and copy bootlocal.sh over to Docker Machine
     # (this will override an existing /var/lib/boot2docker/bootlocal.sh)
     
     local bootlocalsh='#!/bin/sh
@@ -167,10 +167,10 @@ configureBoot2Docker()
     echoSuccess "OK"
 }
 
-# @info:    Restarts Boot2Docker
-restartBoot2Docker()
+# @info:    Restarts Docker Machine
+restartDockerMachine()
 {
-    echoInfo "Restart   Boot2Docker ... \t\t"
+    echoInfo "Restart Docker Machine ... \t\t"
     
     if isPropertyNotSet $prop_machine_name; then echoError "'prop_machine_name' not set!"; exit 1; fi
     
@@ -240,7 +240,7 @@ echo #EMPTY LINE
 configureNFS
 
 configureBoot2Docker
-restartBoot2Docker
+restartDockerMachine
 
 verifyNFSMount
 
