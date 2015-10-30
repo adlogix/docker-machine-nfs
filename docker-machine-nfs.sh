@@ -75,6 +75,61 @@ isPropertyNotSet()
     if [ -z ${1+x} ]; then return 0; else return 1; fi
 }
 
+# @info:    Sets the default properties
+setPropDefaults()
+{
+    prop_machine_name=
+    prop_shared_folder="/Users"
+    prop_force_configuration_nfs=false
+}
+
+# @info:    Parses and validates the CLI arguments
+parseCli()
+{
+    
+    [ "$#" -ge 1 ] || usage
+    
+    prop_machine_name=$1
+    
+    for i in "${@:2}"
+    do
+        
+        case $i in
+            -s=*|--shared-folder=*)
+            prop_shared_folder="${i#*=}"
+            shift 
+            
+            if [ ! -d "$prop_shared_folder" ]; then
+                echoError "Given shared folder '$prop_shared_folder' does not exist!"
+                exit 1
+            fi
+            
+            ;;
+            -f|--force)
+            prop_force_configuration_nfs=true
+            shift 
+            ;;
+            *)
+                    echoError "Unknown argument '$i' given"
+                    echo #EMPTY
+                    usage
+            ;;
+        esac
+    done
+    
+    echoInfo "Configuration:"
+    
+    echo #EMPTY
+    echo #EMPTY
+    
+    echoProperties "Machine Name: $prop_machine_name"
+    echoProperties "Shared Folder: $prop_shared_folder"
+    echoProperties "Force: $prop_force_configuration_nfs"
+    
+    echo #EMPTY
+    
+}
+
 # @info:    Checks if the machine is present
 # @args:    machine-name
 # @return:  (none)
@@ -136,7 +191,7 @@ configureNFS()
     
     # Update the /etc/exports file and restart nfsd
     (
-        echo '\n"/Users" '$prop_machine_ip' -alldirs -mapall='$(id -u)':'$(id -g)'\n' | sudo tee -a /etc/exports && \
+        echo '\n'$prop_shared_folder' '$prop_machine_ip' -alldirs -mapall='$(id -u)':'$(id -g)'\n' | sudo tee -a /etc/exports && \
         awk '!a[$0]++' /etc/exports | sudo tee /etc/exports
         
     ) > /dev/null
@@ -159,9 +214,10 @@ configureBoot2Docker()
     
     local bootlocalsh='#!/bin/sh
     sudo umount /Users
+    sudo mkdir -p '$prop_shared_folder'
     sudo /usr/local/etc/init.d/nfs-client start
-    sudo mount -t nfs -o noacl,async '$prop_machine_vboxnet_ip':/Users /Users'
-
+    sudo mount -t nfs -o noacl,async '$prop_machine_vboxnet_ip':'$prop_shared_folder' '$prop_shared_folder
+    
     docker-machine ssh $prop_machine_name "echo '$bootlocalsh' | sudo tee /var/lib/boot2docker/bootlocal.sh && sudo chmod +x /var/lib/boot2docker/bootlocal.sh" > /dev/null
     
     echoSuccess "OK"
@@ -182,7 +238,7 @@ restartDockerMachine()
 # @return:  'true', if NFS is mounted; else 'false'  
 isNFSMounted()
 {
-    local nfs_mount=$(docker-machine ssh $prop_machine_name "df || true" | grep "$prop_machine_vboxnet_ip:/Users")
+    local nfs_mount=$(docker-machine ssh $prop_machine_name "df || true" | grep "$prop_machine_vboxnet_ip:$prop_shared_folder")
     if [ "" = "$nfs_mount" ]; then echo "false"; else echo "true"; fi
 }
 
@@ -215,17 +271,16 @@ showFinish()
 
 # END _functions
 
-[ "$#" -ge 1 ] || usage
+setPropDefaults
 
-prop_machine_name=$1
-force_reconfiguration_nfs=$2
+parseCli "$@"
 
 checkMachinePresence $prop_machine_name
 checkMachineRunning $prop_machine_name
 
 lookupMandatoryProperties $prop_machine_name
 
-if [ "$(isNFSMounted)" = "true" ] && [ "$force_reconfiguration_nfs" = "" ]; then
+if [ "$(isNFSMounted)" = "true" ] && [ "$prop_force_configuration_nfs" = false ]; then
     echoSuccess "\n NFS already mounted." ; showFinish ; exit 0
 fi
 
@@ -241,6 +296,8 @@ configureNFS
 
 configureBoot2Docker
 restartDockerMachine
+
+sleep 10
 
 verifyNFSMount
 
