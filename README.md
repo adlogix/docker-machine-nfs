@@ -1,13 +1,20 @@
 # Docker Machine NFS
 
-Activates NFS for an existing boot2docker box created through Docker Machine. 
+Activates [NFS](https://en.wikipedia.org/wiki/Network_File_System) for an
+existing boot2docker box created through
+[Docker Machine](https://docs.docker.com/machine/).
+
+## Requirements
+
+* Mac OS X 10.9+
+* [Docker Machine](https://docs.docker.com/machine/) 0.5.0+
 
 ## Install
 
 ```sh
-# Mac OS X
-sudo curl -o /usr/local/bin/docker-machine-nfs https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/docker-machine-nfs.sh && \
-sudo chmod +x /usr/local/bin/docker-machine-nfs 
+curl https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/docker-machine-nfs.sh |
+  sudo tee /usr/local/bin/docker-machine-nfs > /dev/null && \
+  sudo chmod +x /usr/local/bin/docker-machine-nfs
 ```
 
 ## Usage
@@ -22,4 +29,5 @@ docker-machine-nfs <machine-name> [--force]
 
 ## Credits
 
-Heavily inspired by @[mattes](https://github.com/mattes) ruby version (https://gist.github.com/mattes/4d7f435d759ca2581347)
+Heavily inspired by @[mattes](https://github.com/mattes) ruby version
+[boot2docker-nfs.rb](https://gist.github.com/mattes/4d7f435d759ca2581347).

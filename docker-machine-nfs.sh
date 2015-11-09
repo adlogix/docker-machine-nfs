@@ -2,17 +2,17 @@
 #
 # The MIT License (MIT)
 # Copyright © 2015 Toni Van de Voorde <toni.vdv@gmail.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the “Software”), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,7 +29,7 @@ set -o errexit
 # @info:    Prints the usage
 usage ()
 {
-  echo "usage: sh $0 <machine-name> [--force]"
+  echo "Usage: $0 <machine-name> [--shared-folder=/Users] [--force]"
   exit 0
 }
 
@@ -37,96 +37,95 @@ usage ()
 # @args:    error-message
 echoError ()
 {
-    echo "\033[0;31mFAIL\n\n$1 \033[0m"
+  echo "\033[0;31mFAIL\n\n$1 \033[0m"
 }
 
 # @info:    Prints warning messages
 # @args:    warning-message
 echoWarn ()
 {
-    echo "\033[0;33m$1 \033[0m"
+  echo "\033[0;33m$1 \033[0m"
 }
 
 # @info:    Prints success messages
 # @args:    success-message
 echoSuccess ()
 {
-    echo "\033[0;32m$1 \033[0m"
+  echo "\033[0;32m$1 \033[0m"
 }
 
 # @info:    Prints check messages
 # @args:    success-message
 echoInfo ()
 {
-    printf "\033[1;34m[INFO] \033[0m$1"
+  printf "\033[1;34m[INFO] \033[0m$1"
 }
 
 # @info:    Prints property messages
 # @args:    property-message
 echoProperties ()
 {
-    echo "\t\033[0;35m- $1 \033[0m"
+  echo "\t\033[0;35m- $1 \033[0m"
 }
 
 # @info:    Checks if a given property is set
 # @return:  true, if variable is not set; else false
-isPropertyNotSet() 
+isPropertyNotSet()
 {
-    if [ -z ${1+x} ]; then return 0; else return 1; fi
+  if [ -z ${1+x} ]; then return 0; else return 1; fi
 }
 
 # @info:    Sets the default properties
 setPropDefaults()
 {
-    prop_machine_name=
-    prop_shared_folder="/Users"
-    prop_force_configuration_nfs=false
+  prop_machine_name=
+  prop_shared_folder="/Users"
+  prop_force_configuration_nfs=false
 }
 
 # @info:    Parses and validates the CLI arguments
 parseCli()
 {
     
-    [ "$#" -ge 1 ] || usage
-    
-    prop_machine_name=$1
-    
-    for i in "${@:2}"
-    do
-        
-        case $i in
-            -s=*|--shared-folder=*)
-            prop_shared_folder="${i#*=}"
-            shift 
-            
-            if [ ! -d "$prop_shared_folder" ]; then
-                echoError "Given shared folder '$prop_shared_folder' does not exist!"
-                exit 1
-            fi
-            
-            ;;
-            -f|--force)
-            prop_force_configuration_nfs=true
-            shift 
-            ;;
-            *)
-                    echoError "Unknown argument '$i' given"
-                    echo #EMPTY
-                    usage
-            ;;
-        esac
-    done
-    
-    echoInfo "Configuration:"
-    
-    echo #EMPTY
-    echo #EMPTY
-    
-    echoProperties "Machine Name: $prop_machine_name"
-    echoProperties "Shared Folder: $prop_shared_folder"
-    echoProperties "Force: $prop_force_configuration_nfs"
-    
-    echo #EMPTY
+  [ "$#" -ge 1 ] || usage
+  
+  prop_machine_name=$1
+  
+  for i in "${@:2}"
+  do
+    case $i in
+      -s=*|--shared-folder=*)
+      prop_shared_folder="${i#*=}"
+      shift 
+      
+      if [ ! -d "$prop_shared_folder" ]; then
+        echoError "Given shared folder '$prop_shared_folder' does not exist!"
+        exit 1
+      fi
+      
+      ;;
+      -f|--force)
+      prop_force_configuration_nfs=true
+      shift 
+      ;;
+      *)
+              echoError "Unknown argument '$i' given"
+              echo #EMPTY
+              usage
+      ;;
+    esac
+  done
+  
+  echoInfo "Configuration:"
+  
+  echo #EMPTY
+  echo #EMPTY
+  
+  echoProperties "Machine Name: $prop_machine_name"
+  echoProperties "Shared Folder: $prop_shared_folder"
+  echoProperties "Force: $prop_force_configuration_nfs"
+  
+  echo #EMPTY
     
 }
 
@@ -135,13 +134,13 @@ parseCli()
 # @return:  (none)
 checkMachinePresence ()
 {
-    echoInfo "machine presence ... \t\t\t"
-    
-    if [ "" = "$(docker-machine ls | sed 's/  */:/g' | grep $1:)" ]; then
-        echoError "Could not find the machine '$1'!"; exit 1;
-    fi
-        
-    echoSuccess "OK"
+  echoInfo "machine presence ... \t\t\t"
+
+  if [ "" = "$(docker-machine ls | sed 1d | grep -w "$1")" ]; then
+    echoError "Could not find the machine '$1'!"; exit 1;
+  fi
+
+  echoSuccess "OK"
 }
 
 # @info:    Checks if the machine is running
@@ -149,124 +148,177 @@ checkMachinePresence ()
 # @return:  (none)
 checkMachineRunning ()
 {
-    echoInfo "machine running ... \t\t\t"
-    
-    machine_state=$(docker-machine ls | sed 's/\*//g' | sed 's/  */:/g' | grep ^$1: | cut -d ':' -f3)
-    
-    if [ "Running" != "${machine_state}" ]; then
-        echoError "The machine '$1' is not running but '${machine_state}'!"; exit 1;
-    fi
-    
-    echoSuccess "OK"
+  echoInfo "machine running ... \t\t\t"
+
+  machine_state=$(docker-machine ls | sed 1d | grep "^$1\s" | awk '{print $4}')
+
+  if [ "Running" != "${machine_state}" ]; then
+    echoError "The machine '$1' is not running but '${machine_state}'!";
+    exit 1;
+  fi
+
+  echoSuccess "OK"
+}
+
+# @info:    Returns the driver used to create the machine
+# @args:    machine-name
+# @return:  The driver used to create the machine
+getMachineDriver ()
+{
+  docker-machine ls | sed 1d | grep "^$1\s" | awk '{print $3}'
 }
 
 # @info:    Loads mandatory properties from the docker machine
-lookupMandatoryProperties () 
+lookupMandatoryProperties ()
 {
-    echoInfo "Lookup mandatory properties ... \t\t"
-    
-    prop_machine_ip=$(docker-machine ip $1)
-    
-    prop_machine_vboxnet_name=$(VBoxManage showvminfo $1 --machinereadable | grep hostonlyadapter | cut -d'"' -f2)
-    if [ "" = "${prop_machine_vboxnet_name}" ]; then
-        echoError "Could not find the virtualbox net name!"; exit 1
+  echoInfo "Lookup mandatory properties ... \t\t"
+
+  prop_machine_ip=$(docker-machine ip $1)
+
+  prop_machine_driver=$(getMachineDriver $1)
+
+  if [ "$prop_machine_driver" = "parallels" ]; then
+    prop_network_id="Shared"
+    prop_nfshost_ip=$(prlsrvctl net info \
+      "${prop_network_id}" | grep 'IPv4 address' | sed 's/.*: //')
+
+    if [ "" = "${prop_nfshost_ip}" ]; then
+      echoError "Could not find the parallels net IP!"; exit 1
     fi
 
-    prop_machine_vboxnet_ip=$(VBoxManage list hostonlyifs | grep "${prop_machine_vboxnet_name}" -A 3 | grep IPAddress | cut -d ':' -f2 | xargs);
-    if [ "" = "${prop_machine_vboxnet_ip}" ]; then
-        echoError "Could not find the virtualbox net ip!"; exit 1
-    fi
-    
     echoSuccess "OK"
+    return
+  fi
+
+  if [ "$prop_machine_driver" != "virtualbox" ]; then
+    echoError "Unsupported docker-machine driver: $prop_machine_driver"; exit 1
+  fi
+
+  prop_network_id=$(VBoxManage showvminfo $1 --machinereadable |
+    grep hostonlyadapter | cut -d'"' -f2)
+  if [ "" = "${prop_network_id}" ]; then
+    echoError "Could not find the virtualbox net name!"; exit 1
+  fi
+
+  prop_nfshost_ip=$(VBoxManage list hostonlyifs |
+    grep "${prop_network_id}" -A 3 | grep IPAddress |
+    cut -d ':' -f2 | xargs);
+  if [ "" = "${prop_nfshost_ip}" ]; then
+    echoError "Could not find the virtualbox net IP!"; exit 1
+  fi
+
+  echoSuccess "OK"
 }
 
 # @info:    Configures the NFS
-configureNFS() 
-{   
-    echoInfo "Configure NFS ... \n"
-    
-    if isPropertyNotSet $prop_machine_ip; then echoError "'prop_machine_ip' not set!"; exit 1; fi
-        
-    echoWarn "\n !!! Sudo will be necessary for editing /etc/exports !!!"
-    
-    # Update the /etc/exports file and restart nfsd
-    (
-        echo '\n'$prop_shared_folder' '$prop_machine_ip' -alldirs -mapall='$(id -u)':'$(id -g)'\n' | sudo tee -a /etc/exports && \
-        awk '!a[$0]++' /etc/exports | sudo tee /etc/exports
-        
-    ) > /dev/null
-    
-    sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
-    
-    echoSuccess "\t\t\t\t\t\tOK"
+configureNFS()
+{
+  echoInfo "Configure NFS ... \n"
+
+  if isPropertyNotSet $prop_machine_ip; then
+    echoError "'prop_machine_ip' not set!"; exit 1;
+  fi
+
+  echoWarn "\n !!! Sudo will be necessary for editing /etc/exports !!!"
+
+  local user_mapping="$(id -u):$(id -g)"
+
+  # Update the /etc/exports file and restart nfsd
+  (
+    echo '\n'$prop_shared_folder' '$prop_machine_ip' -alldirs -mapall='$user_mapping'\n' |
+      sudo tee -a /etc/exports && awk '!a[$0]++' /etc/exports |
+      sudo tee /etc/exports
+  ) > /dev/null
+
+  sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
+
+  echoSuccess "\t\t\t\t\t\tOK"
 }
 
-# @info:    Configures the VirtualBox Docker Machine (i.e. boot2docker) to mount nfs
+# @info:    Configures the VirtualBox Docker Machine to mount nfs
 configureBoot2Docker()
 {
-    echoInfo "Configure Docker Machine ... \t\t"
+  echoInfo "Configure Docker Machine ... \t\t"
 
-    if isPropertyNotSet $prop_machine_name; then echoError "'prop_machine_name' not set!"; exit 1; fi
-    if isPropertyNotSet $prop_machine_vboxnet_ip; then echoError "'prop_machine_vboxnet_ip' not set!"; exit 1; fi
+  if isPropertyNotSet $prop_machine_name; then
+    echoError "'prop_machine_name' not set!"; exit 1;
+  fi
+  if isPropertyNotSet $prop_nfshost_ip; then
+    echoError "'prop_nfshost_ip' not set!"; exit 1;
+  fi
 
-    # render bootlocal.sh and copy bootlocal.sh over to Docker Machine
-    # (this will override an existing /var/lib/boot2docker/bootlocal.sh)
-    
-    local bootlocalsh='#!/bin/sh
-    sudo umount /Users
-    sudo mkdir -p '$prop_shared_folder'
-    sudo /usr/local/etc/init.d/nfs-client start
-    sudo mount -t nfs -o noacl,async '$prop_machine_vboxnet_ip':'$prop_shared_folder' '$prop_shared_folder
-    
-    docker-machine ssh $prop_machine_name "echo '$bootlocalsh' | sudo tee /var/lib/boot2docker/bootlocal.sh && sudo chmod +x /var/lib/boot2docker/bootlocal.sh" > /dev/null
-    
-    echoSuccess "OK"
+  # render bootlocal.sh and copy bootlocal.sh over to Docker Machine
+  # (this will override an existing /var/lib/boot2docker/bootlocal.sh)
+
+  local bootlocalsh='#!/bin/sh
+  sudo umount /Users
+  sudo mkdir -p '$prop_shared_folder'
+  sudo /usr/local/etc/init.d/nfs-client start
+  sudo mount -t nfs -o noacl,async '$prop_nfshost_ip':'$prop_shared_folder' '$prop_shared_folder
+
+  local file='/var/lib/boot2docker/bootlocal.sh'
+
+  docker-machine ssh $prop_machine_name \
+    "echo '$bootlocalsh' | sudo tee $file && sudo chmod +x $file" > /dev/null
+
+  echoSuccess "OK"
 }
 
 # @info:    Restarts Docker Machine
 restartDockerMachine()
 {
-    echoInfo "Restart Docker Machine ... \t\t"
-    
-    if isPropertyNotSet $prop_machine_name; then echoError "'prop_machine_name' not set!"; exit 1; fi
-    
-    docker-machine restart $prop_machine_name > /dev/null
-    
-    echoSuccess "OK"
+  echoInfo "Restart Docker Machine ... \t\t"
+
+  if isPropertyNotSet $prop_machine_name; then
+    echoError "'prop_machine_name' not set!"; exit 1;
+  fi
+
+  docker-machine restart $prop_machine_name > /dev/null
+
+  echoSuccess "OK"
 }
 
-# @return:  'true', if NFS is mounted; else 'false'  
+# @return:  'true', if NFS is mounted; else 'false'
 isNFSMounted()
 {
-    local nfs_mount=$(docker-machine ssh $prop_machine_name "df || true" | grep "$prop_machine_vboxnet_ip:$prop_shared_folder")
-    if [ "" = "$nfs_mount" ]; then echo "false"; else echo "true"; fi
+  local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo df" |
+    grep "$prop_nfshost_ip:$prop_shared_folder")
+  if [ "" = "$nfs_mount" ]; then echo "false"; else echo "true"; fi
 }
 
 # @info:    Verifies that NFS is successfully mounted
 verifyNFSMount()
 {
-    echoInfo "Verify NFS mount ... \t\t\t"
-    
-    if [ "$(isNFSMounted)" = "false" ]; then
-        echoError "Cannot detect the NFS mount :("; exit 1
-    fi
-    
-    echoSuccess "OK"
+  echoInfo "Verify NFS mount ... \t\t\t"
+
+  local attempts=10
+
+  while [ ! $attempts -eq 0 ]; do
+    sleep 1
+    [ "$(isNFSMounted)" = "true" ] && break
+    attempts=$(($attempts-1))
+  done
+
+  if [ $attempts -eq 0 ]; then
+    echoError "Cannot detect the NFS mount :("; exit 1
+  fi
+
+  echoSuccess "OK"
 }
 
 # @info:    Displays the finish message
 showFinish()
 {
-    echo "\033[0;36m"
-    echo "--------------------------------------------"
-    echo 
-    echo " The docker-machine '$prop_machine_name'"
-    echo " is now mounted with NFS!"
-    echo 
-    echo " ENJOY high speed mounts :D"
-    echo 
-    echo "--------------------------------------------"
-    echo "\033[0m"
+  echo "\033[0;36m"
+  echo "--------------------------------------------"
+  echo
+  echo " The docker-machine '$prop_machine_name'"
+  echo " is now mounted with NFS!"
+  echo
+  echo " ENJOY high speed mounts :D"
+  echo
+  echo "--------------------------------------------"
+  echo "\033[0m"
 }
 
 # END _functions
@@ -287,8 +339,8 @@ fi
 echo #EMPTY LINE
 
 echoProperties "Machine IP: $prop_machine_ip"
-echoProperties "Machine VBOXNET name: $prop_machine_vboxnet_name"
-echoProperties "Machine VBOXNET ip: $prop_machine_vboxnet_ip"
+echoProperties "Network ID: $prop_network_id"
+echoProperties "NFSHost IP: $prop_nfshost_ip"
 
 echo #EMPTY LINE
 
@@ -296,8 +348,6 @@ configureNFS
 
 configureBoot2Docker
 restartDockerMachine
-
-sleep 10
 
 verifyNFSMount
 
