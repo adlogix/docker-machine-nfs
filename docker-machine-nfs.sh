@@ -79,7 +79,7 @@ isPropertyNotSet()
 setPropDefaults()
 {
   prop_machine_name=
-  prop_shared_folder="/Users"
+  prop_shared_folders=()
   prop_force_configuration_nfs=false
 }
 
@@ -95,26 +95,33 @@ parseCli()
   do
     case $i in
       -s=*|--shared-folder=*)
-      prop_shared_folder="${i#*=}"
+      local shared_folder="${i#*=}"
       shift 
       
-      if [ ! -d "$prop_shared_folder" ]; then
-        echoError "Given shared folder '$prop_shared_folder' does not exist!"
+      if [ ! -d "$shared_folder" ]; then
+        echoError "Given shared folder '$shared_folder' does not exist!"
         exit 1
       fi
       
+      prop_shared_folders+=($shared_folder)
       ;;
+      
       -f|--force)
       prop_force_configuration_nfs=true
       shift 
       ;;
+      
       *)
-              echoError "Unknown argument '$i' given"
-              echo #EMPTY
-              usage
+        echoError "Unknown argument '$i' given"
+        echo #EMPTY
+        usage
       ;;
     esac
   done
+  
+  if [ ${#prop_shared_folders[@]} -eq 0 ]; then
+    prop_shared_folders+=("/Users")
+  fi;
   
   echoInfo "Configuration:"
   
@@ -122,7 +129,10 @@ parseCli()
   echo #EMPTY
   
   echoProperties "Machine Name: $prop_machine_name"
-  echoProperties "Shared Folder: $prop_shared_folder"
+  for shared_folder in "${prop_shared_folders[@]}"
+  do
+    echoProperties "Shared Folder: $shared_folder"
+  done
   echoProperties "Force: $prop_force_configuration_nfs"
   
   echo #EMPTY
@@ -223,12 +233,15 @@ configureNFS()
 
   local user_mapping="$(id -u):$(id -g)"
 
-  # Update the /etc/exports file and restart nfsd
-  (
-    echo '\n'$prop_shared_folder' '$prop_machine_ip' -alldirs -mapall='$user_mapping'\n' |
-      sudo tee -a /etc/exports && awk '!a[$0]++' /etc/exports |
-      sudo tee /etc/exports
-  ) > /dev/null
+  for shared_folder in "${prop_shared_folders[@]}"
+  do
+    # Update the /etc/exports file and restart nfsd
+    (
+      echo '\n'$shared_folder' '$prop_machine_ip' -alldirs -mapall='$user_mapping'\n' |
+        sudo tee -a /etc/exports && awk '!a[$0]++' /etc/exports |
+        sudo tee /etc/exports
+    ) > /dev/null
+  done
 
   sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
 
@@ -251,12 +264,24 @@ configureBoot2Docker()
   # (this will override an existing /var/lib/boot2docker/bootlocal.sh)
 
   local bootlocalsh='#!/bin/sh
-  sudo umount /Users
-  sudo mkdir -p '$prop_shared_folder'
-  sudo /usr/local/etc/init.d/nfs-client start
-  sudo mount -t nfs -o noacl,async '$prop_nfshost_ip':'$prop_shared_folder' '$prop_shared_folder
+  sudo umount /Users'
+  
+  for shared_folder in "${prop_shared_folders[@]}"
+  do
+    bootlocalsh="${bootlocalsh}
+    sudo mkdir -p "$shared_folder
+  done
+  
+  bootlocalsh="${bootlocalsh}
+  sudo /usr/local/etc/init.d/nfs-client start"
+  
+  for shared_folder in "${prop_shared_folders[@]}"
+  do
+    bootlocalsh="${bootlocalsh}
+    sudo mount -t nfs -o noacl,async "$prop_nfshost_ip":"$shared_folder" "$shared_folder
+  done
 
-  local file='/var/lib/boot2docker/bootlocal.sh'
+  local file="/var/lib/boot2docker/bootlocal.sh"
 
   docker-machine ssh $prop_machine_name \
     "echo '$bootlocalsh' | sudo tee $file && sudo chmod +x $file" > /dev/null
@@ -281,9 +306,17 @@ restartDockerMachine()
 # @return:  'true', if NFS is mounted; else 'false'
 isNFSMounted()
 {
-  local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo df" |
-    grep "$prop_nfshost_ip:$prop_shared_folder")
-  if [ "" = "$nfs_mount" ]; then echo "false"; else echo "true"; fi
+  for shared_folder in "${prop_shared_folders[@]}"
+  do
+    local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo df" |
+      grep "$prop_nfshost_ip:$prop_shared_folders")
+    if [ "" = "$nfs_mount" ]; then 
+      echo "false"; 
+      return;
+    fi
+  done
+  
+  echo "true"
 }
 
 # @info:    Verifies that NFS is successfully mounted
