@@ -123,6 +123,19 @@ lookupMandatoryProperties ()
 
   prop_machine_driver=$(getMachineDriver $1)
 
+  if [ "$prop_machine_driver" = "vmwarefusion" ]; then
+    prop_network_id="Shared"
+
+    prop_nfshost_ip=$(ifconfig -m `route get 8.8.8.8 | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')
+    prop_machine_ip=$prop_nfshost_ip
+    if [ "" = "${prop_nfshost_ip}" ]; then
+      echoError "Could not find the vmware fusion net IP!"; exit 1
+    fi
+
+    echoSuccess "OK"
+    return
+  fi
+
   if [ "$prop_machine_driver" = "parallels" ]; then
     prop_network_id="Shared"
     prop_nfshost_ip=$(prlsrvctl net info \
