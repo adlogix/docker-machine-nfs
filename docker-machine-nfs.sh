@@ -309,7 +309,6 @@ configureBoot2Docker()
     bootlocalsh="${bootlocalsh}
     sudo mount -t nfs -o noacl,async "$prop_nfshost_ip":"$shared_folder" "${prop_shared_folder_aliases[ALIAS_COUNTER]}
     let ALIAS_COUNTER=ALIAS_COUNTER+1
-    echo $ALIAS_COUNTER
   done
 
   local file="/var/lib/boot2docker/bootlocal.sh"
