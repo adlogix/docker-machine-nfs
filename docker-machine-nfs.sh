@@ -29,7 +29,7 @@ set -o errexit
 # @info:    Prints the usage
 usage ()
 {
-  echo "Usage: $0 <machine-name> [--force]"
+  echo "Usage: $0 <machine-name> [--shared-folder=/Users] [--shared-folder-alias=/Users] [--force]"
   exit 0
 }
 
@@ -73,6 +73,90 @@ echoProperties ()
 isPropertyNotSet()
 {
   if [ -z ${1+x} ]; then return 0; else return 1; fi
+}
+
+# @info:    Sets the default properties
+setPropDefaults()
+{
+  prop_machine_name=
+  prop_shared_folders=()
+  prop_shared_folder_aliases=()
+  prop_force_configuration_nfs=false
+}
+
+# @info:    Parses and validates the CLI arguments
+parseCli()
+{
+
+  [ "$#" -ge 1 ] || usage
+
+  prop_machine_name=$1
+
+  for i in "${@:2}"
+  do
+    case $i in
+      -s=*|--shared-folder=*)
+      local shared_folder="${i#*=}"
+      shift
+
+      if [ ! -d "$shared_folder" ]; then
+        echoError "Given shared folder '$shared_folder' does not exist!"
+        exit 1
+      fi
+
+      prop_shared_folders+=($shared_folder)
+      ;;
+
+      -sa=*|--shared-folder-alias=*)
+      local shared_folder_alias="${i#*=}"
+      shift
+
+      prop_shared_folder_aliases+=($shared_folder_alias)
+      ;;
+
+      -f|--force)
+      prop_force_configuration_nfs=true
+      shift
+      ;;
+
+      *)
+        echoError "Unknown argument '$i' given"
+        echo #EMPTY
+        usage
+      ;;
+    esac
+  done
+
+  if [ ${#prop_shared_folders[@]} -eq 0 ]; then
+    prop_shared_folders+=("/Users")
+  fi;
+
+  if [ ${#prop_shared_folder_aliases[@]} -eq 0 ]; then
+    prop_shared_folder_aliases=prop_shared_folders
+  fi;
+
+  echoInfo "Configuration:"
+
+  echo #EMPTY
+  echo #EMPTY
+
+  echoProperties "Machine Name: $prop_machine_name"
+  SHARE_COUNTER=1
+  for shared_folder in "${prop_shared_folders[@]}"
+  do
+    echoProperties "Shared Folder $SHARE_COUNTER: $shared_folder"
+    let SHARE_COUNTER=SHARE_COUNTER+1
+  done
+  ALIAS_COUNTER=1
+  for shared_folder_alias in "${prop_shared_folder_aliases[@]}"
+  do
+    echoProperties "Shared Folder Alias $ALIAS_COUNTER: $shared_folder_alias"
+    let ALIAS_COUNTER=ALIAS_COUNTER+1
+  done
+  echoProperties "Force: $prop_force_configuration_nfs"
+
+  echo #EMPTY
+
 }
 
 # @info:    Checks if the machine is present
@@ -123,6 +207,19 @@ lookupMandatoryProperties ()
 
   prop_machine_driver=$(getMachineDriver $1)
 
+  if [ "$prop_machine_driver" = "vmwarefusion" ]; then
+    prop_network_id="Shared"
+
+    prop_nfshost_ip=$(ifconfig -m `route get 8.8.8.8 | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')
+    prop_machine_ip=$prop_nfshost_ip
+    if [ "" = "${prop_nfshost_ip}" ]; then
+      echoError "Could not find the vmware fusion net IP!"; exit 1
+    fi
+
+    echoSuccess "OK"
+    return
+  fi
+
   if [ "$prop_machine_driver" = "parallels" ]; then
     prop_network_id="Shared"
     prop_nfshost_ip=$(prlsrvctl net info \
@@ -169,12 +266,15 @@ configureNFS()
 
   local user_mapping="$(id -u):$(id -g)"
 
-  # Update the /etc/exports file and restart nfsd
-  (
-    echo '\n"/Users" '$prop_machine_ip' -alldirs -mapall='$user_mapping'\n' |
-      sudo tee -a /etc/exports && awk '!a[$0]++' /etc/exports |
-      sudo tee /etc/exports
-  ) > /dev/null
+  for shared_folder in "${prop_shared_folders[@]}"
+  do
+    # Update the /etc/exports file and restart nfsd
+    (
+      echo '\n'$shared_folder' '$prop_machine_ip' -alldirs -mapall='$user_mapping'\n' |
+        sudo tee -a /etc/exports && awk '!a[$0]++' /etc/exports |
+        sudo tee /etc/exports
+    ) > /dev/null
+  done
 
   sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
 
@@ -197,11 +297,25 @@ configureBoot2Docker()
   # (this will override an existing /var/lib/boot2docker/bootlocal.sh)
 
   local bootlocalsh='#!/bin/sh
-  sudo umount /Users
-  sudo /usr/local/etc/init.d/nfs-client start
-  sudo mount -t nfs -o noacl,async '$prop_nfshost_ip':/Users /Users'
+  sudo umount /Users'
 
-  local file='/var/lib/boot2docker/bootlocal.sh'
+  for shared_folder_alias in "${prop_shared_folder_aliases[@]}"
+  do
+    bootlocalsh="${bootlocalsh}
+    sudo mkdir -p "$shared_folder_alias
+  done
+
+  bootlocalsh="${bootlocalsh}
+  sudo /usr/local/etc/init.d/nfs-client start"
+  ALIAS_COUNTER=0
+  for shared_folder in "${prop_shared_folders[@]}"
+  do
+    bootlocalsh="${bootlocalsh}
+    sudo mount -t nfs -o noacl,async "$prop_nfshost_ip":"$shared_folder" "${prop_shared_folder_aliases[ALIAS_COUNTER]}
+    let ALIAS_COUNTER=ALIAS_COUNTER+1
+  done
+
+  local file="/var/lib/boot2docker/bootlocal.sh"
 
   docker-machine ssh $prop_machine_name \
     "echo '$bootlocalsh' | sudo tee $file && sudo chmod +x $file" > /dev/null
@@ -226,9 +340,17 @@ restartDockerMachine()
 # @return:  'true', if NFS is mounted; else 'false'
 isNFSMounted()
 {
-  local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo df" |
-    grep "$prop_nfshost_ip:/Users")
-  if [ "" = "$nfs_mount" ]; then echo "false"; else echo "true"; fi
+  for shared_folder in "${prop_shared_folders[@]}"
+  do
+    local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo df" |
+      grep "$prop_nfshost_ip:$prop_shared_folders")
+    if [ "" = "$nfs_mount" ]; then
+      echo "false";
+      return;
+    fi
+  done
+
+  echo "true"
 }
 
 # @info:    Verifies that NFS is successfully mounted
@@ -268,18 +390,17 @@ showFinish()
 
 # END _functions
 
-[ "$#" -ge 1 ] || usage
+setPropDefaults
 
-prop_machine_name=$1
-force_reconfigure_nfs=$2
+parseCli "$@"
 
 checkMachinePresence $prop_machine_name
 checkMachineRunning $prop_machine_name
 
 lookupMandatoryProperties $prop_machine_name
 
-if [ "$(isNFSMounted)" = "true" ] && [ "$force_reconfigure_nfs" = "" ]; then
-  echoSuccess "\n NFS already mounted." ; showFinish ; exit 0
+if [ "$(isNFSMounted)" = "true" ] && [ "$prop_force_configuration_nfs" = false ]; then
+    echoSuccess "\n NFS already mounted." ; showFinish ; exit 0
 fi
 
 echo #EMPTY LINE
