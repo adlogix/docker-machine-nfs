@@ -141,13 +141,17 @@ parseCli()
   echo #EMPTY
 
   echoProperties "Machine Name: $prop_machine_name"
+  SHARE_COUNTER=1
   for shared_folder in "${prop_shared_folders[@]}"
   do
-    echoProperties "Shared Folder: $shared_folder"
+    echoProperties "Shared Folder $SHARE_COUNTER: $shared_folder"
+    let SHARE_COUNTER=SHARE_COUNTER+1
   done
+  ALIAS_COUNTER=1
   for shared_folder_alias in "${prop_shared_folder_aliases[@]}"
   do
-    echoProperties "Shared Folder Alias: $shared_folder_alias"
+    echoProperties "Shared Folder Alias $ALIAS_COUNTER: $shared_folder_alias"
+    let ALIAS_COUNTER=ALIAS_COUNTER+1
   done
   echoProperties "Force: $prop_force_configuration_nfs"
 
