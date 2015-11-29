@@ -29,7 +29,7 @@ set -o errexit
 # @info:    Prints the usage
 usage ()
 {
-  echo "Usage: $0 <machine-name> [--shared-folder=/Users] [--force]"
+  echo "Usage: $0 <machine-name> [--shared-folder=/Users] [--shared-folder-alias=/Users] [--force]"
   exit 0
 }
 
@@ -80,37 +80,45 @@ setPropDefaults()
 {
   prop_machine_name=
   prop_shared_folders=()
+  prop_shared_folder_aliases=()
   prop_force_configuration_nfs=false
 }
 
 # @info:    Parses and validates the CLI arguments
 parseCli()
 {
-    
+
   [ "$#" -ge 1 ] || usage
-  
+
   prop_machine_name=$1
-  
+
   for i in "${@:2}"
   do
     case $i in
       -s=*|--shared-folder=*)
       local shared_folder="${i#*=}"
-      shift 
-      
+      shift
+
       if [ ! -d "$shared_folder" ]; then
         echoError "Given shared folder '$shared_folder' does not exist!"
         exit 1
       fi
-      
+
       prop_shared_folders+=($shared_folder)
       ;;
-      
+
+      -sa=*|--shared-folder-alias=*)
+      local shared_folder_alias="${i#*=}"
+      shift
+
+      prop_shared_folder_aliases+=($shared_folder_alias)
+      ;;
+
       -f|--force)
       prop_force_configuration_nfs=true
-      shift 
+      shift
       ;;
-      
+
       *)
         echoError "Unknown argument '$i' given"
         echo #EMPTY
@@ -118,25 +126,33 @@ parseCli()
       ;;
     esac
   done
-  
+
   if [ ${#prop_shared_folders[@]} -eq 0 ]; then
     prop_shared_folders+=("/Users")
   fi;
-  
+
+  if [ ${#prop_shared_folder_aliases[@]} -eq 0 ]; then
+    prop_shared_folder_aliases=prop_shared_folders
+  fi;
+
   echoInfo "Configuration:"
-  
+
   echo #EMPTY
   echo #EMPTY
-  
+
   echoProperties "Machine Name: $prop_machine_name"
   for shared_folder in "${prop_shared_folders[@]}"
   do
     echoProperties "Shared Folder: $shared_folder"
   done
+  for shared_folder_alias in "${prop_shared_folder_aliases[@]}"
+  do
+    echoProperties "Shared Folder Alias: $shared_folder_alias"
+  done
   echoProperties "Force: $prop_force_configuration_nfs"
-  
+
   echo #EMPTY
-    
+
 }
 
 # @info:    Checks if the machine is present
@@ -278,20 +294,22 @@ configureBoot2Docker()
 
   local bootlocalsh='#!/bin/sh
   sudo umount /Users'
-  
-  for shared_folder in "${prop_shared_folders[@]}"
+
+  for shared_folder_alias in "${prop_shared_folder_aliases[@]}"
   do
     bootlocalsh="${bootlocalsh}
-    sudo mkdir -p "$shared_folder
+    sudo mkdir -p "$shared_folder_alias
   done
-  
+
   bootlocalsh="${bootlocalsh}
   sudo /usr/local/etc/init.d/nfs-client start"
-  
+  ALIAS_COUNTER=0
   for shared_folder in "${prop_shared_folders[@]}"
   do
     bootlocalsh="${bootlocalsh}
-    sudo mount -t nfs -o noacl,async "$prop_nfshost_ip":"$shared_folder" "$shared_folder
+    sudo mount -t nfs -o noacl,async "$prop_nfshost_ip":"$shared_folder" "${prop_shared_folder_aliases[ALIAS_COUNTER]}
+    let ALIAS_COUNTER=ALIAS_COUNTER+1
+    echo $ALIAS_COUNTER
   done
 
   local file="/var/lib/boot2docker/bootlocal.sh"
@@ -323,12 +341,12 @@ isNFSMounted()
   do
     local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo df" |
       grep "$prop_nfshost_ip:$prop_shared_folders")
-    if [ "" = "$nfs_mount" ]; then 
-      echo "false"; 
+    if [ "" = "$nfs_mount" ]; then
+      echo "false";
       return;
     fi
   done
-  
+
   echo "true"
 }
 
