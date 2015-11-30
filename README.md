@@ -20,7 +20,7 @@ curl https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/docker-
 ## Usage
 
 ```sh
-docker-machine-nfs <machine-name> [--force]
+docker-machine-nfs <machine-name> [--shared-folder=/Users,...] [--force]
 ```
 
 ## Demo
