@@ -29,7 +29,7 @@ set -o errexit
 # @info:    Prints the usage
 usage ()
 {
-  echo "Usage: $0 <machine-name> [--shared-folder=/Users] [--force]"
+  echo "Usage: $0 <machine-name> [--shared-folder=/Users,...] [--force]"
   exit 0
 }
 
