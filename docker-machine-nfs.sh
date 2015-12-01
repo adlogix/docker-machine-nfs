@@ -132,7 +132,7 @@ parseCli()
   fi;
 
   if [ ${#prop_shared_folder_aliases[@]} -eq 0 ]; then
-    prop_shared_folder_aliases=prop_shared_folders
+    prop_shared_folder_aliases=$prop_shared_folders
   fi;
 
   echoInfo "Configuration:"
