@@ -29,7 +29,30 @@ set -o errexit
 # @info:    Prints the usage
 usage ()
 {
-  echo "Usage: $0 <machine-name> [--shared-folder=/Users,...] [--force]"
+  cat <<EOF
+Usage: $0 <machine-name> [options]
+
+Options:
+  
+  -f, --force               Force reconfiguration of nfs
+  -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=\$(id -u):\$(id -g)')
+  -s, --shared-folder,...   Folder to share (default to /Users)
+  
+Examples:
+
+  $ docker-machine-nfs test
+  
+    > Configure the /Users folder with NFS
+  
+  $ docker-machine-nfs test --shared-folder=/Users --shared-folder=/var/www
+  
+    > Configures the /Users and /var/www folder with NFS
+    
+  $ docker-machine-nfs test --shared-folder=/var/www --nfs-config="-alldirs -maproot=0"
+  
+    > Configure the /var/www folder with NFS and the options '-alldirs -maproot=0'
+  
+EOF
   exit 0
 }
 
@@ -80,6 +103,7 @@ setPropDefaults()
 {
   prop_machine_name=
   prop_shared_folders=()
+  prop_nfs_config="-alldirs -mapall="$(id -u):$(id -g)
   prop_force_configuration_nfs=false
 }
 
@@ -104,6 +128,10 @@ parseCli()
       fi
       
       prop_shared_folders+=($shared_folder)
+      ;;
+      
+      -n=*|--nfs-config=*)
+        prop_nfs_config="${i#*=}"
       ;;
       
       -f|--force)
@@ -231,13 +259,11 @@ configureNFS()
 
   echoWarn "\n !!! Sudo will be necessary for editing /etc/exports !!!"
 
-  local user_mapping="$(id -u):$(id -g)"
-
   for shared_folder in "${prop_shared_folders[@]}"
   do
     # Update the /etc/exports file and restart nfsd
     (
-      echo '\n'$shared_folder' '$prop_machine_ip' -alldirs -mapall='$user_mapping'\n' |
+      echo '\n'$shared_folder' '$prop_machine_ip' '$prop_nfs_config'\n' |
         sudo tee -a /etc/exports && awk '!a[$0]++' /etc/exports |
         sudo tee /etc/exports
     ) > /dev/null
