@@ -33,25 +33,25 @@ usage ()
 Usage: $0 <machine-name> [options]
 
 Options:
-  
+
   -f, --force               Force reconfiguration of nfs
   -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=\$(id -u):\$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
-  
+
 Examples:
 
   $ docker-machine-nfs test
-  
+
     > Configure the /Users folder with NFS
-  
+
   $ docker-machine-nfs test --shared-folder=/Users --shared-folder=/var/www
-  
+
     > Configures the /Users and /var/www folder with NFS
-    
+
   $ docker-machine-nfs test --shared-folder=/var/www --nfs-config="-alldirs -maproot=0"
-  
+
     > Configure the /var/www folder with NFS and the options '-alldirs -maproot=0'
-  
+
 EOF
   exit 0
 }
@@ -110,35 +110,35 @@ setPropDefaults()
 # @info:    Parses and validates the CLI arguments
 parseCli()
 {
-    
+
   [ "$#" -ge 1 ] || usage
-  
+
   prop_machine_name=$1
-  
+
   for i in "${@:2}"
   do
     case $i in
       -s=*|--shared-folder=*)
       local shared_folder="${i#*=}"
-      shift 
-      
+      shift
+
       if [ ! -d "$shared_folder" ]; then
         echoError "Given shared folder '$shared_folder' does not exist!"
         exit 1
       fi
-      
+
       prop_shared_folders+=($shared_folder)
       ;;
-      
+
       -n=*|--nfs-config=*)
         prop_nfs_config="${i#*=}"
       ;;
-      
+
       -f|--force)
       prop_force_configuration_nfs=true
-      shift 
+      shift
       ;;
-      
+
       *)
         echoError "Unknown argument '$i' given"
         echo #EMPTY
@@ -146,25 +146,25 @@ parseCli()
       ;;
     esac
   done
-  
+
   if [ ${#prop_shared_folders[@]} -eq 0 ]; then
     prop_shared_folders+=("/Users")
   fi;
-  
+
   echoInfo "Configuration:"
-  
+
   echo #EMPTY
   echo #EMPTY
-  
+
   echoProperties "Machine Name: $prop_machine_name"
   for shared_folder in "${prop_shared_folders[@]}"
   do
     echoProperties "Shared Folder: $shared_folder"
   done
   echoProperties "Force: $prop_force_configuration_nfs"
-  
+
   echo #EMPTY
-    
+
 }
 
 # @info:    Checks if the machine is present
@@ -209,11 +209,37 @@ getMachineDriver ()
 # @info:    Loads mandatory properties from the docker machine
 lookupMandatoryProperties ()
 {
-  echoInfo "Lookup mandatory properties ... \t\t"
+  echoInfo "Lookup mandatory properties ... "
 
   prop_machine_ip=$(docker-machine ip $1)
 
   prop_machine_driver=$(getMachineDriver $1)
+
+  if [ "$prop_machine_driver" = "vmwarefusion" ]; then
+    prop_network_id="Shared"
+    prop_nfshost_ip=$(ifconfig -m `route get 8.8.8.8 | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')
+    prop_machine_ip=$prop_nfshost_ip
+    if [ "" = "${prop_nfshost_ip}" ]; then
+      echoError "Could not find the vmware fusion net IP!"; exit 1
+    fi
+    local nfsd_line="nfs.server.mount.require_resv_port = 0"
+    echoSuccess "\t\tOK"
+
+    echoInfo "Check NFS config settings ... \n"
+    if [ "$(grep -Fxq "$nfsd_line" /etc/nfs.conf)" == "0" ]; then
+      echoInfo "/etc/nfs.conf is setup correctly!"
+    else
+      echoWarn "\n !!! Sudo will be necessary for editing /etc/nfs.conf !!!"
+      # Backup /etc/nfs.conf file
+      sudo cp /etc/nfs.conf /etc/nfs.conf.bak && \
+      echo "nfs.server.mount.require_resv_port = 0" | \
+        sudo tee /etc/nfs.conf > /dev/null
+      echoWarn "\n !!! Backed up /etc/nfs.conf to /nfs.conf.bak !!!"
+      echoWarn "\n !!! Added 'nfs.server.mount.require_resv_port = 0' to /etc/nfs.conf !!!"
+    fi
+    echoSuccess "\n\t\t\t\t\t\tOK"
+    return
+  fi
 
   if [ "$prop_machine_driver" = "parallels" ]; then
     prop_network_id="Shared"
@@ -291,16 +317,16 @@ configureBoot2Docker()
 
   local bootlocalsh='#!/bin/sh
   sudo umount /Users'
-  
+
   for shared_folder in "${prop_shared_folders[@]}"
   do
     bootlocalsh="${bootlocalsh}
     sudo mkdir -p "$shared_folder
   done
-  
+
   bootlocalsh="${bootlocalsh}
   sudo /usr/local/etc/init.d/nfs-client start"
-  
+
   for shared_folder in "${prop_shared_folders[@]}"
   do
     bootlocalsh="${bootlocalsh}
@@ -336,12 +362,12 @@ isNFSMounted()
   do
     local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo df" |
       grep "$prop_nfshost_ip:$prop_shared_folders")
-    if [ "" = "$nfs_mount" ]; then 
-      echo "false"; 
+    if [ "" = "$nfs_mount" ]; then
+      echo "false";
       return;
     fi
   done
-  
+
   echo "true"
 }
 
