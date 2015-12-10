@@ -17,6 +17,11 @@ curl https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/docker-
   sudo chmod +x /usr/local/bin/docker-machine-nfs
 ```
 
+## Supports
+
+* Virtualbox
+* Paralells
+
 ## Usage
 
 ```sh
