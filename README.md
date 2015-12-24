@@ -21,6 +21,7 @@ curl https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/docker-
 
 * Virtualbox
 * Paralells
+* VMware Fusion
 
 ## Usage
 
