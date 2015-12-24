@@ -209,11 +209,37 @@ getMachineDriver ()
 # @info:    Loads mandatory properties from the docker machine
 lookupMandatoryProperties ()
 {
-  echoInfo "Lookup mandatory properties ... \t\t"
+  echoInfo "Lookup mandatory properties ... "
 
   prop_machine_ip=$(docker-machine ip $1)
 
   prop_machine_driver=$(getMachineDriver $1)
+
+  if [ "$prop_machine_driver" = "vmwarefusion" ]; then
+    prop_network_id="Shared"
+    prop_nfshost_ip=$(ifconfig -m `route get 8.8.8.8 | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')
+    prop_machine_ip=$prop_nfshost_ip
+    if [ "" = "${prop_nfshost_ip}" ]; then
+      echoError "Could not find the vmware fusion net IP!"; exit 1
+    fi
+    local nfsd_line="nfs.server.mount.require_resv_port = 0"
+    echoSuccess "\t\tOK"
+
+    echoInfo "Check NFS config settings ... \n"
+    if [ "$(grep -Fxq "$nfsd_line" /etc/nfs.conf)" == "0" ]; then
+      echoInfo "/etc/nfs.conf is setup correctly!"
+    else
+      echoWarn "\n !!! Sudo will be necessary for editing /etc/nfs.conf !!!"
+      # Backup /etc/nfs.conf file
+      sudo cp /etc/nfs.conf /etc/nfs.conf.bak && \
+      echo "nfs.server.mount.require_resv_port = 0" | \
+        sudo tee /etc/nfs.conf > /dev/null
+      echoWarn "\n !!! Backed up /etc/nfs.conf to /nfs.conf.bak !!!"
+      echoWarn "\n !!! Added 'nfs.server.mount.require_resv_port = 0' to /etc/nfs.conf !!!"
+    fi
+    echoSuccess "\n\t\t\t\t\t\tOK"
+    return
+  fi
 
   if [ "$prop_machine_driver" = "parallels" ]; then
     prop_network_id="Shared"
