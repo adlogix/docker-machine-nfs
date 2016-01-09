@@ -334,10 +334,12 @@ configureBoot2Docker()
   done
 
   local file="/var/lib/boot2docker/bootlocal.sh"
-
-  docker-machine ssh $prop_machine_name \
-    "echo '$bootlocalsh' | sudo tee $file && sudo chmod +x $file" > /dev/null
-
+  local temp=$(mktemp -t docker-machine-nfs)
+  local temp_dev=$(docker-machine ssh $prop_machine_name mktemp)
+  echo "$bootlocalsh" | tee $temp > /dev/null
+  docker-machine scp $temp $prop_machine_name:$temp_dev > /dev/null
+  docker-machine ssh $prop_machine_name sudo mv $temp_dev $file
+  docker-machine ssh $prop_machine_name sudo chmod +x $file
   echoSuccess "OK"
 }
 
