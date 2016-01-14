@@ -26,9 +26,29 @@ set -o errexit
 
 # BEGIN _functions
 
+# @info:    Prints the ascii logo
+asciiLogo ()
+{
+  echo
+  echo
+  echo '                       ##         .'
+  echo '                 ## ## ##        ==               _   _ _____ ____'
+  echo '              ## ## ## ## ##    ===              | \ | |  ___/ ___|'
+  echo '          /"""""""""""""""""\___/ ===            |  \| | |_  \___ \'
+  echo '     ~~~ {~~ ~~~~ ~~~ ~~~~ ~~~ ~ /  ===- ~~~     | |\  |  _|  ___) |'
+  echo '          \______ o           __/                |_| \_|_|   |____/'
+  echo '            \    \         __/'
+  echo '             \____\_______/'
+  echo
+  echo
+}
+
 # @info:    Prints the usage
 usage ()
 {
+
+  asciiLogo
+
   cat <<EOF
 Usage: $0 <machine-name> [options]
 
