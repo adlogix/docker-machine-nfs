@@ -338,6 +338,8 @@ configureBoot2Docker()
   docker-machine ssh $prop_machine_name \
     "echo '$bootlocalsh' | sudo tee $file && sudo chmod +x $file" > /dev/null
 
+  sleep 20
+
   echoSuccess "OK"
 }
 
