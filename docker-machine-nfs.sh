@@ -330,7 +330,7 @@ configureBoot2Docker()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     bootlocalsh="${bootlocalsh}
-    sudo mount -t nfs -o noacl,async "$prop_nfshost_ip":"$shared_folder" "$shared_folder
+    sudo mount -t nfs -o noacl,async,nolock,vers=3,udp,noatime,actimeo=1 "$prop_nfshost_ip":"$shared_folder" "$shared_folder
   done
 
   local file="/var/lib/boot2docker/bootlocal.sh"
