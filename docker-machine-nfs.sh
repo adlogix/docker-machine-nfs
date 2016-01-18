@@ -336,9 +336,9 @@ configureBoot2Docker()
   local file="/var/lib/boot2docker/bootlocal.sh"
 
   docker-machine ssh $prop_machine_name \
-    "echo '$bootlocalsh' | sudo tee $file && sudo chmod +x $file" > /dev/null
+    "echo '$bootlocalsh' | sudo tee $file && sudo chmod +x $file && sync" > /dev/null
 
-  sleep 20
+  sleep 2
 
   echoSuccess "OK"
 }
