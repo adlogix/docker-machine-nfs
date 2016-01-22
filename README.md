@@ -22,6 +22,7 @@ curl https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/docker-
 * Virtualbox
 * Paralells
 * VMware Fusion
+* xhyve
 
 ## Usage
 
@@ -29,23 +30,23 @@ curl https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/docker-
 Usage: ./docker-machine-nfs.sh <machine-name> [options]
 
 Options:
-  
+
   -f, --force               Force reconfiguration of nfs
   -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=$(id -u):$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
-  
+
 Examples:
 
   $ docker-machine-nfs test
-  
+
     > Configure the /Users folder with NFS
-  
+
   $ docker-machine-nfs test --shared-folder=/Users --shared-folder=/var/www
-  
+
     > Configures the /Users and /var/www folder with NFS
-    
+
   $ docker-machine-nfs test --shared-folder=/var/www --nfs-config="-alldirs -maproot=0"
-  
+
     > Configure the /var/www folder with NFS and the options '-alldirs -maproot=0'
 ```
 
