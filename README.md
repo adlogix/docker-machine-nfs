@@ -26,32 +26,40 @@ curl -s https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/dock
 ## Usage
 
 ```sh
+
+
+                       ##         .
+                 ## ## ##        ==               _   _ _____ ____
+              ## ## ## ## ##    ===              | \ | |  ___/ ___|
+          /"""""""""""""""""\___/ ===            |  \| | |_  \___ \
+     ~~~ {~~ ~~~~ ~~~ ~~~~ ~~~ ~ /  ===- ~~~     | |\  |  _|  ___) |
+          \______ o           __/                |_| \_|_|   |____/
+            \    \         __/
+             \____\_______/
+
+
 Usage: ./docker-machine-nfs.sh <machine-name> [options]
 
 Options:
-  
+
   -f, --force               Force reconfiguration of nfs
   -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=$(id -u):$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
-  
+
 Examples:
 
   $ docker-machine-nfs test
-  
+
     > Configure the /Users folder with NFS
-  
+
   $ docker-machine-nfs test --shared-folder=/Users --shared-folder=/var/www
-  
+
     > Configures the /Users and /var/www folder with NFS
-    
+
   $ docker-machine-nfs test --shared-folder=/var/www --nfs-config="-alldirs -maproot=0"
-  
+
     > Configure the /var/www folder with NFS and the options '-alldirs -maproot=0'
 ```
-
-## Demo
-
-[![asciicast](https://asciinema.org/a/20224.png)](https://asciinema.org/a/20224)
 
 ## Credits
 
