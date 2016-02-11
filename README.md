@@ -22,6 +22,7 @@ curl -s https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/dock
 * Virtualbox
 * Paralells
 * VMware Fusion
+* xhyve
 
 ## Usage
 
