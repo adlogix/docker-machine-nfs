@@ -44,8 +44,9 @@ Usage: ./docker-machine-nfs.sh <machine-name> [options]
 Options:
 
   -f, --force               Force reconfiguration of nfs
-  -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=$(id -u):$(id -g)')
+  -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=\$(id -u):\$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
+  -m, --mount-opts          NFS mount options (default to 'noacl,async')
 
 Examples:
 
@@ -60,6 +61,11 @@ Examples:
   $ docker-machine-nfs test --shared-folder=/var/www --nfs-config="-alldirs -maproot=0"
 
     > Configure the /var/www folder with NFS and the options '-alldirs -maproot=0'
+
+  $ docker-machine-nfs test --mount-opts="noacl,async,nolock,vers=3,udp,noatime,actimeo=1"
+
+    > Configure the /User folder with NFS and specific mount options.
+
 ```
 
 ## Credits

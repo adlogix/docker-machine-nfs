@@ -57,6 +57,7 @@ Options:
   -f, --force               Force reconfiguration of nfs
   -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=\$(id -u):\$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
+  -m, --mount-opts          NFS mount options (default to 'noacl,async')
 
 Examples:
 
@@ -71,6 +72,10 @@ Examples:
   $ docker-machine-nfs test --shared-folder=/var/www --nfs-config="-alldirs -maproot=0"
 
     > Configure the /var/www folder with NFS and the options '-alldirs -maproot=0'
+
+  $ docker-machine-nfs test --mount-opts="noacl,async,nolock,vers=3,udp,noatime,actimeo=1"
+
+    > Configure the /User folder with NFS and specific mount options.
 
 EOF
   exit 0
@@ -124,6 +129,7 @@ setPropDefaults()
   prop_machine_name=
   prop_shared_folders=()
   prop_nfs_config="-alldirs -mapall="$(id -u):$(id -g)
+  prop_mount_options="noacl,async"
   prop_force_configuration_nfs=false
 }
 
@@ -154,6 +160,11 @@ parseCli()
         prop_nfs_config="${i#*=}"
       ;;
 
+      -m=*|--mount-opts=*)
+        prop_mount_options="${i#*=}"
+      ;;
+
+
       -f|--force)
       prop_force_configuration_nfs=true
       shift
@@ -181,6 +192,8 @@ parseCli()
   do
     echoProperties "Shared Folder: $shared_folder"
   done
+
+  echoProperties "Mount Options: $prop_mount_options"
   echoProperties "Force: $prop_force_configuration_nfs"
 
   echo #EMPTY
@@ -360,7 +373,7 @@ configureBoot2Docker()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     bootlocalsh="${bootlocalsh}
-    sudo mount -t nfs -o noacl,async "$prop_nfshost_ip":"$shared_folder" "$shared_folder
+    sudo mount -t nfs -o "$prop_mount_options" "$prop_nfshost_ip":"$shared_folder" "$shared_folder
   done
 
   local file="/var/lib/boot2docker/bootlocal.sh"
