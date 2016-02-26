@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # The MIT License (MIT)
 # Copyright © 2015 Toni Van de Voorde <toni.vdv@gmail.com>
