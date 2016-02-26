@@ -338,8 +338,12 @@ configureNFS()
     ) > /dev/null
   done
 
-  sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
-
+  #TODO Make this check smarter, not everything else will be ubuntu
+  if [ $(uname) == "Darwin"]; then
+    sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
+  else
+    sudo service nfs-kernel-server restart
+  fi
   echoSuccess "\t\t\t\t\t\tOK"
 }
 
