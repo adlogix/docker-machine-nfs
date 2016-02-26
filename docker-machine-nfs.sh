@@ -332,7 +332,7 @@ configureNFS()
   do
     # Update the /etc/exports file and restart nfsd
     (
-      echo '\n'$shared_folder' '$prop_machine_ip' '$prop_nfs_config'\n' |
+      echo "$shared_folder $prop_machine_ip$prop_nfs_config" |
         sudo tee -a /etc/exports && awk '!a[$0]++' /etc/exports |
         sudo tee /etc/exports
     ) > /dev/null
