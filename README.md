@@ -11,11 +11,20 @@ existing boot2docker box created through
 
 ## Install
 
+### Standalone
+
 ```sh
 curl -s https://raw.githubusercontent.com/adlogix/docker-machine-nfs/master/docker-machine-nfs.sh |
   sudo tee /usr/local/bin/docker-machine-nfs > /dev/null && \
   sudo chmod +x /usr/local/bin/docker-machine-nfs
 ```
+
+### [Homebrew](http://brew.sh/)
+
+```sh
+brew install docker-machine-nfs
+```
+
 
 ## Supports
 
