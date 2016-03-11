@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # The MIT License (MIT)
 # Copyright © 2015 Toni Van de Voorde <toni.vdv@gmail.com>
@@ -332,14 +332,18 @@ configureNFS()
   do
     # Update the /etc/exports file and restart nfsd
     (
-      echo '\n'$shared_folder' '$prop_machine_ip' '$prop_nfs_config'\n' |
+      echo "$shared_folder $prop_machine_ip$prop_nfs_config" |
         sudo tee -a /etc/exports && awk '!a[$0]++' /etc/exports |
         sudo tee /etc/exports
     ) > /dev/null
   done
 
-  sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
-
+  #TODO Make this check smarter, not everything else will be ubuntu
+  if [ $(uname) == "Darwin" ]; then
+    sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
+  else
+    sudo service nfs-kernel-server restart
+  fi
   echoSuccess "\t\t\t\t\t\tOK"
 }
 
