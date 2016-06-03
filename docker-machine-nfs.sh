@@ -328,15 +328,31 @@ configureNFS()
 
   echoWarn "\n !!! Sudo will be necessary for editing /etc/exports !!!"
 
+	#-- Update the /etc/exports file and restart nfsd
+
+	local exports_begin="# docker-machine-nfs-begin $prop_machine_name"
+	local exports_end="# docker-machine-nfs-end $prop_machine_name"
+
+	# Remove old docker-machine-nfs exports
+	local exports=$(cat /etc/exports | \
+		tr "\n" "\r" | \
+		sed "s/${exports_begin}.*${exports_end}//" | \
+		tr "\r" "\n"
+	)
+
+	# Write new exports blocks beginning
+	exports="${exports}\n${exports_begin}\n"
+
   for shared_folder in "${prop_shared_folders[@]}"
   do
-    # Update the /etc/exports file and restart nfsd
-    (
-      echo '\n'$shared_folder' '$prop_machine_ip' '$prop_nfs_config'\n' |
-        sudo tee -a /etc/exports && awk '!a[$0]++' /etc/exports |
-        sudo tee /etc/exports
-    ) > /dev/null
+		# Add new exports
+		exports="${exports}$shared_folder $prop_machine_ip $prop_nfs_config\n"
   done
+
+	# Write new exports block ending
+	exports="${exports}${exports_end}"
+	#Export to file
+	echo "$exports" | sudo tee /etc/exports >/dev/null
 
   sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
 
