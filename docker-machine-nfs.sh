@@ -421,8 +421,8 @@ isNFSMounted()
 {
   for shared_folder in "${prop_shared_folders[@]}"
   do
-    local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo df" |
-      grep "$prop_nfshost_ip:$prop_shared_folders")
+    local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo mount" |
+      grep "$prop_nfshost_ip:$prop_shared_folders on")
     if [ "" = "$nfs_mount" ]; then
       echo "false";
       return;
