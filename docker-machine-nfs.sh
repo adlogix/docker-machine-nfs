@@ -26,6 +26,11 @@ set -o errexit
 
 # BEGIN _functions
 
+version ()
+{
+  echo "0.2.1"
+}
+
 # @info:    Prints the ascii logo
 asciiLogo ()
 {
@@ -136,7 +141,7 @@ setPropDefaults()
 # @info:    Parses and validates the CLI arguments
 parseCli()
 {
-
+  [ "$1" = "version" ] && version && exit
   [ "$#" -ge 1 ] || usage
 
   prop_machine_name=$1
