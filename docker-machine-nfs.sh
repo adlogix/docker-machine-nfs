@@ -58,6 +58,7 @@ Options:
   -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=\$(id -u):\$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
   -m, --mount-opts          NFS mount options (default to 'noacl,async')
+  -i, --use-ip-range        Changes the nfs export ip to a range (e.g. -network 192.168.99.100 becomes -network 192.168.99)
 
 Examples:
 
@@ -76,7 +77,6 @@ Examples:
   $ docker-machine-nfs test --mount-opts="noacl,async,nolock,vers=3,udp,noatime,actimeo=1"
 
     > Configure the /User folder with NFS and specific mount options.
-
 EOF
   exit 0
 }
@@ -131,6 +131,7 @@ setPropDefaults()
   prop_nfs_config="-alldirs -mapall="$(id -u):$(id -g)
   prop_mount_options="noacl,async"
   prop_force_configuration_nfs=false
+  prop_use_ip_range=false
 }
 
 # @info:    Parses and validates the CLI arguments
@@ -164,10 +165,12 @@ parseCli()
         prop_mount_options="${i#*=}"
       ;;
 
-
       -f|--force)
       prop_force_configuration_nfs=true
-      shift
+      ;;
+
+      -i|--use-ip-range)
+      prop_use_ip_range=true
       ;;
 
       *)
@@ -343,10 +346,15 @@ configureNFS()
   # Write new exports blocks beginning
   exports="${exports}\n${exports_begin}\n"
 
+  local machine_ip=$prop_machine_ip
+  if [ "$prop_use_ip_range" = true ]; then
+    machine_ip="${machine_ip%.*}"
+  fi
+
   for shared_folder in "${prop_shared_folders[@]}"
   do
     # Add new exports
-    exports="${exports}$shared_folder $prop_machine_ip $prop_nfs_config\n"
+    exports="${exports}$shared_folder -network $machine_ip $prop_nfs_config\n"
   done
 
   # Write new exports block ending
