@@ -348,13 +348,13 @@ configureNFS()
 
   local machine_ip=$prop_machine_ip
   if [ "$prop_use_ip_range" = true ]; then
-    machine_ip="${machine_ip%.*}"
+    machine_ip="-network ${machine_ip%.*}"
   fi
 
   for shared_folder in "${prop_shared_folders[@]}"
   do
     # Add new exports
-    exports="${exports}$shared_folder -network $machine_ip $prop_nfs_config\n"
+    exports="${exports}$shared_folder $machine_ip $prop_nfs_config\n"
   done
 
   # Write new exports block ending
