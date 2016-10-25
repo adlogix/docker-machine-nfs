@@ -333,8 +333,8 @@ configureNFS()
 
   #-- Update the /etc/exports file and restart nfsd
 
-  local exports_begin="# docker-machine-nfs-begin $prop_machine_name"
-  local exports_end="# docker-machine-nfs-end $prop_machine_name"
+  local exports_begin="# docker-machine-nfs-begin $prop_machine_name #"
+  local exports_end="# docker-machine-nfs-end $prop_machine_name #"
 
   # Remove old docker-machine-nfs exports
   local exports=$(cat /etc/exports | \
