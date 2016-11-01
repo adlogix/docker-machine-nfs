@@ -48,7 +48,7 @@ brew install docker-machine-nfs
              \____\_______/
 
 
-Usage: ./docker-machine-nfs.sh <machine-name> [options]
+Usage: $ docker-machine-nfs <machine-name> [options]
 
 Options:
 
