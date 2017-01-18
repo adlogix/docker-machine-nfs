@@ -311,7 +311,7 @@ lookupMandatoryProperties ()
   fi
 
   prop_nfshost_ip=$(VBoxManage list hostonlyifs |
-    grep "${prop_network_id}" -A 3 | grep IPAddress |
+    grep "${prop_network_id}$" -A 3 | grep IPAddress |
     cut -d ':' -f2 | xargs);
   if [ "" = "${prop_nfshost_ip}" ]; then
     echoError "Could not find the virtualbox net IP!"; exit 1
