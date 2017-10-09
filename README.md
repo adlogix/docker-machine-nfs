@@ -5,6 +5,7 @@ existing boot2docker box created through
 [Docker Machine](https://docs.docker.com/machine/).
 
 ## Requirements
+:warning: There seem to be an issue with the NFS under Mac OS X High Sierra (see issue [#79](https://github.com/adlogix/docker-machine-nfs/issues/79) for more info) :warning:
 
 * Mac OS X 10.9+
 * [Docker Machine](https://docs.docker.com/machine/) 0.5.0+
