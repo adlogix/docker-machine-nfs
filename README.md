@@ -57,6 +57,7 @@ Options:
   -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=\$(id -u):\$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
   -m, --mount-opts          NFS mount options (default to 'noacl,async')
+  -i, --use-ip-range        Changes the nfs export ip to a range (e.g. -network 192.168.99.100 becomes -network 192.168.99)
 
 Examples:
 

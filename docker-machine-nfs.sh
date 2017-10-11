@@ -253,7 +253,7 @@ lookupMandatoryProperties ()
 
   if [ "$prop_machine_driver" = "vmwarefusion" ]; then
     prop_network_id="Shared"
-    prop_nfshost_ip=$(ifconfig -m `route get 8.8.8.8 | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')
+    prop_nfshost_ip=$(ifconfig -m `route get $prop_machine_ip | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')
     prop_machine_ip=$prop_nfshost_ip
     if [ "" = "${prop_nfshost_ip}" ]; then
       echoError "Could not find the vmware fusion net IP!"; exit 1
@@ -429,8 +429,16 @@ isNFSMounted()
 {
   for shared_folder in "${prop_shared_folders[@]}"
   do
+    case $prop_machine_driver in
+      vmwarefusion)
+        nfs_mount_name="vmhgfs-fuse on $shared_folder"
+        ;;
+      *)
+        nfs_mount_name="$prop_nfshost_ip:$prop_shared_folders on"
+        ;;
+    esac
     local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo mount" |
-      grep "$prop_nfshost_ip:$prop_shared_folders on")
+      grep "$nfs_mount_name")
     if [ "" = "$nfs_mount" ]; then
       echo "false";
       return;
