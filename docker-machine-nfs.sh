@@ -360,7 +360,7 @@ configureNFS()
   # Write new exports block ending
   exports="${exports}${exports_end}"
   #Export to file
-  echo "$exports" | sudo tee /etc/exports >/dev/null
+  printf "$exports" | sudo tee /etc/exports >/dev/null
 
   sudo nfsd restart ; sleep 2 && sudo nfsd checkexports
 
