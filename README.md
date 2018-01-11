@@ -32,6 +32,7 @@ brew install docker-machine-nfs
 * Virtualbox
 * Paralells
 * VMware Fusion
+* VMware Vsphere
 * xhyve
 
 ## Usage
@@ -75,6 +76,10 @@ Examples:
   $ docker-machine-nfs test --mount-opts="noacl,async,nolock,vers=3,udp,noatime,actimeo=1"
 
     > Configure the /User folder with NFS and specific mount options.
+
+  $ docker-machine-nfs test --ip 192.168.1.12
+
+    > docker-machine will connect to your host machine via this address
 
 ```
 

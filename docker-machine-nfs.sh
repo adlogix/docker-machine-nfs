@@ -59,6 +59,7 @@ Options:
   -s, --shared-folder,...   Folder to share (default to /Users)
   -m, --mount-opts          NFS mount options (default to 'noacl,async')
   -i, --use-ip-range        Changes the nfs export ip to a range (e.g. -network 192.168.99.100 becomes -network 192.168.99)
+  -p, --ip                  Configures the docker-machine to connect to your host machine via a specific ip address
 
 Examples:
 
@@ -77,6 +78,10 @@ Examples:
   $ docker-machine-nfs test --mount-opts="noacl,async,nolock,vers=3,udp,noatime,actimeo=1"
 
     > Configure the /User folder with NFS and specific mount options.
+
+  $ docker-machine-nfs test --ip 192.168.1.12
+
+    > docker-machine will connect to your host machine via this address
 EOF
   exit 0
 }
@@ -132,6 +137,7 @@ setPropDefaults()
   prop_mount_options="noacl,async"
   prop_force_configuration_nfs=false
   prop_use_ip_range=false
+  prop_use_ip=
 }
 
 # @info:    Parses and validates the CLI arguments
@@ -171,6 +177,10 @@ parseCli()
 
       -i|--use-ip-range)
       prop_use_ip_range=true
+      ;;
+
+      -p=*|--ip=*)
+      prop_use_ip="${i#*=}"
       ;;
 
       *)
@@ -253,7 +263,7 @@ lookupMandatoryProperties ()
 
   if [ "$prop_machine_driver" = "vmwarefusion" ]; then
     prop_network_id="Shared"
-    prop_nfshost_ip=$(ifconfig -m `route get 8.8.8.8 | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')
+    prop_nfshost_ip=${prop_use_ip:-"$(ifconfig -m `route get 8.8.8.8 | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')"}
     prop_machine_ip=$prop_nfshost_ip
     if [ "" = "${prop_nfshost_ip}" ]; then
       echoError "Could not find the vmware fusion net IP!"; exit 1
@@ -279,7 +289,7 @@ lookupMandatoryProperties ()
 
   if [ "$prop_machine_driver" = "xhyve" ]; then
     prop_network_id="Shared"
-    prop_nfshost_ip=$(ifconfig -m `route get $prop_machine_ip | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')
+    prop_nfshost_ip=${prop_use_ip:-"$(ifconfig -m `route get $prop_machine_ip | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')"}
     if [ "" = "${prop_nfshost_ip}" ]; then
       echoError "Could not find the xhyve net IP!"; exit 1
     fi
@@ -289,11 +299,22 @@ lookupMandatoryProperties ()
 
   if [ "$prop_machine_driver" = "parallels" ]; then
     prop_network_id="Shared"
-    prop_nfshost_ip=$(prlsrvctl net info \
-      "${prop_network_id}" | grep 'IPv4 address' | sed 's/.*: //')
+    prop_nfshost_ip=${prop_use_ip:-"$(prlsrvctl net info \
+      ${prop_network_id} | grep 'IPv4 address' | sed 's/.*: //')"}
 
     if [ "" = "${prop_nfshost_ip}" ]; then
       echoError "Could not find the parallels net IP!"; exit 1
+    fi
+
+    echoSuccess "OK"
+    return
+  fi
+
+  if [ "$prop_machine_driver" = "vmwarevsphere" ]; then
+    prop_nfshost_ip=${prop_use_ip:-}
+
+    if [ "" = "${prop_nfshost_ip}" ]; then
+      echoError "Need to explictly set ip to use with -p|--ip!"; exit 1
     fi
 
     echoSuccess "OK"
