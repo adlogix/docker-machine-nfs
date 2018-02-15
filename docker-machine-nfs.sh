@@ -60,6 +60,7 @@ Options:
   -m, --mount-opts          NFS mount options (default to 'noacl,async')
   -i, --use-ip-range        Changes the nfs export ip to a range (e.g. -network 192.168.99.100 becomes -network 192.168.99)
   -p, --ip                  Configures the docker-machine to connect to your host machine via a specific ip address
+  -t, --timeout             Configures how long the timeout should be for docker-machine commands
 
 Examples:
 
@@ -137,7 +138,7 @@ setPropDefaults()
   prop_mount_options="noacl,async"
   prop_force_configuration_nfs=false
   prop_use_ip_range=false
-  prop_use_ip=
+  prop_timeout=60
 }
 
 # @info:    Parses and validates the CLI arguments
@@ -183,6 +184,10 @@ parseCli()
       prop_use_ip="${i#*=}"
       ;;
 
+      -t=*|--timeout=*)
+      prop_timeout="${i#*=}"
+      ;;
+
       *)
         echoError "Unknown argument '$i' given"
         echo #EMPTY
@@ -220,7 +225,7 @@ checkMachinePresence ()
 {
   echoInfo "machine presence ... \t\t\t"
 
-  if [ "" = "$(docker-machine ls | sed 1d | grep -w "$1")" ]; then
+  if [ "" = "$(docker-machine ls -t "$2" | sed 1d | grep -w "$1")" ]; then
     echoError "Could not find the machine '$1'!"; exit 1;
   fi
 
@@ -234,7 +239,7 @@ checkMachineRunning ()
 {
   echoInfo "machine running ... \t\t\t"
 
-  machine_state=$(docker-machine ls | sed 1d | grep "^$1\s" | awk '{print $4}')
+  machine_state=$(docker-machine ls -t "$2" | sed 1d | grep "^$1\s" | awk '{print $4}')
 
   if [ "Running" != "${machine_state}" ]; then
     echoError "The machine '$1' is not running but '${machine_state}'!";
@@ -249,7 +254,7 @@ checkMachineRunning ()
 # @return:  The driver used to create the machine
 getMachineDriver ()
 {
-  docker-machine ls | sed 1d | grep "^$1\s" | awk '{print $3}'
+  docker-machine ls -t "$2"| sed 1d | grep "^$1\s" | awk '{print $3}'
 }
 
 # @info:    Loads mandatory properties from the docker machine
@@ -259,7 +264,7 @@ lookupMandatoryProperties ()
 
   prop_machine_ip=$(docker-machine ip $1)
 
-  prop_machine_driver=$(getMachineDriver $1)
+  prop_machine_driver=$(getMachineDriver $1 $2)
 
   if [ "$prop_machine_driver" = "vmwarefusion" ]; then
     prop_network_id="Shared"
@@ -504,10 +509,10 @@ setPropDefaults
 
 parseCli "$@"
 
-checkMachinePresence $prop_machine_name
-checkMachineRunning $prop_machine_name
+checkMachinePresence $prop_machine_name $prop_timeout
+checkMachineRunning $prop_machine_name $prop_timeout
 
-lookupMandatoryProperties $prop_machine_name
+lookupMandatoryProperties $prop_machine_name $prop_timeout
 
 if [ "$(isNFSMounted)" = "true" ] && [ "$prop_force_configuration_nfs" = false ]; then
     echoSuccess "\n NFS already mounted." ; showFinish ; exit 0
