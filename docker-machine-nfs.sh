@@ -138,7 +138,7 @@ setPropDefaults()
   prop_mount_options="noacl,async"
   prop_force_configuration_nfs=false
   prop_use_ip_range=false
-  prop_timeout=60
+  prop_timeout=
 }
 
 # @info:    Parses and validates the CLI arguments
@@ -185,7 +185,7 @@ parseCli()
       ;;
 
       -t=*|--timeout=*)
-      prop_timeout="${i#*=}"
+      prop_timeout="-t ${i#*=}"
       ;;
 
       *)
@@ -225,7 +225,7 @@ checkMachinePresence ()
 {
   echoInfo "machine presence ... \t\t\t"
 
-  if [ "" = "$(docker-machine ls -t "$2" | sed 1d | grep -w "$1")" ]; then
+  if [ "" = "$(docker-machine ls $2 | sed 1d | grep -w "$1")" ]; then
     echoError "Could not find the machine '$1'!"; exit 1;
   fi
 
@@ -239,7 +239,7 @@ checkMachineRunning ()
 {
   echoInfo "machine running ... \t\t\t"
 
-  machine_state=$(docker-machine ls -t "$2" | sed 1d | grep "^$1\s" | awk '{print $4}')
+  machine_state=$(docker-machine ls $2 | sed 1d | grep "^$1\s" | awk '{print $4}')
 
   if [ "Running" != "${machine_state}" ]; then
     echoError "The machine '$1' is not running but '${machine_state}'!";
@@ -254,7 +254,7 @@ checkMachineRunning ()
 # @return:  The driver used to create the machine
 getMachineDriver ()
 {
-  docker-machine ls -t "$2"| sed 1d | grep "^$1\s" | awk '{print $3}'
+  docker-machine ls $2 | sed 1d | grep "^$1\s" | awk '{print $3}'
 }
 
 # @info:    Loads mandatory properties from the docker machine
@@ -264,7 +264,7 @@ lookupMandatoryProperties ()
 
   prop_machine_ip=$(docker-machine ip $1)
 
-  prop_machine_driver=$(getMachineDriver $1 $2)
+  prop_machine_driver=$(getMachineDriver $1 "$2")
 
   if [ "$prop_machine_driver" = "vmwarefusion" ]; then
     prop_network_id="Shared"
@@ -509,10 +509,10 @@ setPropDefaults
 
 parseCli "$@"
 
-checkMachinePresence $prop_machine_name $prop_timeout
-checkMachineRunning $prop_machine_name $prop_timeout
+checkMachinePresence $prop_machine_name "$prop_timeout"
+checkMachineRunning $prop_machine_name "$prop_timeout"
 
-lookupMandatoryProperties $prop_machine_name $prop_timeout
+lookupMandatoryProperties $prop_machine_name "$prop_timeout"
 
 if [ "$(isNFSMounted)" = "true" ] && [ "$prop_force_configuration_nfs" = false ]; then
     echoSuccess "\n NFS already mounted." ; showFinish ; exit 0
