@@ -317,8 +317,7 @@ lookupMandatoryProperties ()
 
   if [ "$prop_machine_driver" = "vmwarevsphere" ]; then
     # Checks the routing table to find the ip address that your machine will use to connect to the docker-machine
-    machine_ip=$(netstat -rn -f inet | awk -v pattern="^$(route get ${prop_machine_ip} | grep gateway | awk '{print $2}')[^\/]" '$0 ~ pattern {print $2}')
-    prop_nfshost_ip=${prop_use_ip:-${machine_ip}}
+    prop_nfshost_ip=${prop_use_ip:-"$(ifconfig -m `route get $prop_machine_ip | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')"}
 
     if [ "" = "${prop_nfshost_ip}" ]; then
       echoError "Could not find a route to the docker-machine!"; exit 1
