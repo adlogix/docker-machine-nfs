@@ -277,7 +277,7 @@ lookupMandatoryProperties ()
     echoSuccess "\t\tOK"
 
     echoInfo "Check NFS config settings ... \n"
-    if [ "$(grep -Fxq "$nfsd_line" /etc/nfs.conf)" == "0" ]; then
+    if [ "$(cat /etc/nfs.conf | grep -c "$nfsd_line")" == "1" ]; then
       echoInfo "/etc/nfs.conf is setup correctly!"
     else
       echoWarn "\n !!! Sudo will be necessary for editing /etc/nfs.conf !!!"
