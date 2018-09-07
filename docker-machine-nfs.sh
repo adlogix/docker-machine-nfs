@@ -161,7 +161,7 @@ parseCli()
         exit 1
       fi
 
-      prop_shared_folders+=($shared_folder)
+      prop_shared_folders+=("$shared_folder")
       ;;
 
       -n=*|--nfs-config=*)
@@ -369,7 +369,7 @@ configureNFS()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     # Add new exports
-    exports="${exports}$shared_folder $machine_ip $prop_nfs_config\n"
+    exports="${exports}\"$shared_folder\" $machine_ip $prop_nfs_config\n"
   done
 
   # Write new exports block ending
@@ -403,7 +403,7 @@ configureBoot2Docker()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     bootlocalsh="${bootlocalsh}
-    sudo mkdir -p "$shared_folder
+    sudo mkdir -p \""$shared_folder"\""
   done
 
   bootlocalsh="${bootlocalsh}
@@ -412,7 +412,7 @@ configureBoot2Docker()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     bootlocalsh="${bootlocalsh}
-    sudo mount -t nfs -o "$prop_mount_options" "$prop_nfshost_ip":"$shared_folder" "$shared_folder
+    sudo mount -t nfs -o "$prop_mount_options" "$prop_nfshost_ip":\""$shared_folder"\" \""$shared_folder"\""
   done
 
   local file="/var/lib/boot2docker/bootlocal.sh"
