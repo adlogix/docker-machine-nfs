@@ -57,7 +57,7 @@ Options:
   -f, --force               Force reconfiguration of nfs
   -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=\$(id -u):\$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
-  -m, --mount-opts          NFS mount options (default to 'noacl,async')
+  -m, --mount-opts          NFS mount options (default to 'noacl,async,nfsvers=3')
   -i, --use-ip-range        Changes the nfs export ip to a range (e.g. -network 192.168.99.100 becomes -network 192.168.99)
   -p, --ip                  Configures the docker-machine to connect to your host machine via a specific ip address
   -t, --timeout             Configures how long the timeout should be for docker-machine commands
