@@ -135,7 +135,7 @@ setPropDefaults()
   prop_machine_name=
   prop_shared_folders=()
   prop_nfs_config="-alldirs -mapall="$(id -u):$(id -g)
-  prop_mount_options="noacl,async"
+  prop_mount_options="noacl,async,nfsvers=3"
   prop_force_configuration_nfs=false
   prop_use_ip_range=false
   prop_timeout=
