@@ -1,14 +1,25 @@
 # Docker Machine NFS
 
+## Requirements
+
+* [Docker Machine](https://docs.docker.com/machine/) 0.5.0+
+
+## Mac OS X 10.9+
+
 Activates [NFS](https://en.wikipedia.org/wiki/Network_File_System) for an
 existing boot2docker box created through
 [Docker Machine](https://docs.docker.com/machine/).
 
-## Requirements
 :warning: There can be an issue with the NFS under Mac OS X High Sierra (see issue [#79](https://github.com/adlogix/docker-machine-nfs/issues/79) for more info) :warning:
 
-* Mac OS X 10.9+
-* [Docker Machine](https://docs.docker.com/machine/) 0.5.0+
+## Windows 10 with WSL
+
+* [Install WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+* [Install VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+* [Setup Docker-machine for WSL](https://www.paraesthesia.com/archive/2018/09/20/docker-on-wsl-with-virtualbox-and-docker-machine/)
+* [Install haneWIN NFS server](https://hanewin.net/nfs-e.htm)
+* [Install `docker-machine-nfs`](#standalone)
+* Tested with these attributes: `docker-machine-nfs MACHINE-NAME --shared-folder=/c/Users/ --mount-opts="rw,vers=3,tcp,nolock,noacl,async"`
 
 ## Install
 
@@ -36,6 +47,9 @@ brew install docker-machine-nfs
 * xhyve
 
 ## Usage
+
+* Create `docker-machine` as usual
+* Run `docker-machine-nfs`
 
 ```sh
 
@@ -85,5 +99,6 @@ Examples:
 
 ## Credits
 
-Heavily inspired by @[mattes](https://github.com/mattes) ruby version
+* Heavily inspired by @[mattes](https://github.com/mattes) ruby version
 [boot2docker-nfs.rb](https://gist.github.com/mattes/4d7f435d759ca2581347).
+* @[DzeryCZ](https://github.com/DzeryCZ) added support for Windows with WSL
