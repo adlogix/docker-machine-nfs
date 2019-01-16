@@ -266,9 +266,9 @@ lookupMandatoryProperties ()
 
   prop_machine_driver=$(getMachineDriver $1 "$2")
 
-  if [ "$prop_machine_driver" = "vmwarefusion" ]; then
+  if [ "$prop_machine_driver" = "vmwarefusion" ] || [ "$prop_machine_driver" = "vmware" ]; then
     prop_network_id="Shared"
-    prop_nfshost_ip=${prop_use_ip:-"$(ifconfig -m `route get 8.8.8.8 | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')"}
+    prop_nfshost_ip=${prop_use_ip:-"$(ifconfig -m `route get $prop_machine_ip | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')"}
     prop_machine_ip=$prop_nfshost_ip
     if [ "" = "${prop_nfshost_ip}" ]; then
       echoError "Could not find the vmware fusion net IP!"; exit 1
