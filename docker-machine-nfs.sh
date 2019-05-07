@@ -225,7 +225,9 @@ checkMachinePresence ()
 {
   echoInfo "machine presence ... \t\t\t"
 
-  if [ "" = "$(docker-machine ls $2 --filter 'Name=^$1$' -q)" ]; then
+  machine_name=$(docker-machine ls $2 --filter "Name=^$1$" -q)
+
+  if [ "" = "${machine_name}" ]; then
     echoError "Could not find the machine '$1'!"; exit 1;
   fi
 
