@@ -57,7 +57,7 @@ Options:
   -f, --force               Force reconfiguration of nfs
   -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=\$(id -u):\$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
-  -m, --mount-opts          NFS mount options (default to 'noacl,async,vers=3')
+  -m, --mount-opts          NFS mount options (default to 'noacl,async,nfsvers=3')
   -i, --use-ip-range        Changes the nfs export ip to a range (e.g. -network 192.168.99.100 becomes -network 192.168.99)
   -p, --ip                  Configures the docker-machine to connect to your host machine via a specific ip address
   -t, --timeout             Configures how long the timeout should be for docker-machine commands
@@ -91,21 +91,21 @@ EOF
 # @args:    error-message
 echoError ()
 {
-  printf "\033[0;31mFAIL\n\n$1 \033[0m\n"
+  echo "\033[0;31mFAIL\n\n$1 \033[0m"
 }
 
 # @info:    Prints warning messages
 # @args:    warning-message
 echoWarn ()
 {
-  printf "\033[0;33m$1 \033[0m\n"
+  echo "\033[0;33m$1 \033[0m"
 }
 
 # @info:    Prints success messages
 # @args:    success-message
 echoSuccess ()
 {
-  printf "\033[0;32m$1 \033[0m\n"
+  echo "\033[0;32m$1 \033[0m"
 }
 
 # @info:    Prints check messages
@@ -119,7 +119,7 @@ echoInfo ()
 # @args:    property-message
 echoProperties ()
 {
-  printf "\t\033[0;35m- $1 \033[0m\n"
+  echo "\t\033[0;35m- $1 \033[0m"
 }
 
 # @info:    Checks if a given property is set
@@ -135,7 +135,7 @@ setPropDefaults()
   prop_machine_name=
   prop_shared_folders=()
   prop_nfs_config="-alldirs -mapall="$(id -u):$(id -g)
-  prop_mount_options="noacl,async,vers=3"
+  prop_mount_options="noacl,async,nfsvers=3"
   prop_force_configuration_nfs=false
   prop_use_ip_range=false
   prop_timeout=
@@ -196,8 +196,14 @@ parseCli()
     esac
   done
 
+  if [ "$(isWsl)" = "true" ]; then
+    local default_shared_foder="/c/Users"
+  else
+    local default_shared_foder="/Users"
+  fi
+
   if [ ${#prop_shared_folders[@]} -eq 0 ]; then
-    prop_shared_folders+=("/Users")
+    prop_shared_folders+=("${default_shared_foder}")
   fi;
 
   echoInfo "Configuration:"
@@ -260,7 +266,7 @@ getMachineDriver ()
 # @info:    Loads mandatory properties from the docker machine
 lookupMandatoryProperties ()
 {
-  echoInfo "Lookup mandatory properties ... \t\t"
+  echoInfo "Lookup mandatory properties ... "
 
   prop_machine_ip=$(docker-machine ip $1)
 
@@ -325,8 +331,8 @@ lookupMandatoryProperties ()
     echoError "Could not find the virtualbox net name!"; exit 1
   fi
 
-  prop_nfshost_ip=$(VBoxManage list hostonlyifs |
-    grep "${prop_network_id}" -A 3 | grep IPAddress |
+  prop_nfshost_ip=$(VBoxManage list hostonlyifs | tr -d '\r' |
+    grep "${prop_network_id}$" -A 3 | grep IPAddress |
     cut -d ':' -f2 | xargs);
   if [ "" = "${prop_nfshost_ip}" ]; then
     echoError "Could not find the virtualbox net IP!"; exit 1
@@ -423,9 +429,15 @@ configureBoot2Docker()
   # render bootlocal.sh and copy bootlocal.sh over to Docker Machine
   # (this will override an existing /var/lib/boot2docker/bootlocal.sh)
 
-  local bootlocalsh='#!/bin/sh
-  sudo umount /Users
-  sudo umount /c/Users'
+  local bootlocalsh="#!/bin/sh"
+
+  if [ "$(isWsl)" = "true" ]; then
+    bootlocalsh="${bootlocalsh}
+    sudo umount /c/Users"
+  else
+    bootlocalsh="${bootlocalsh}
+    sudo umount /Users"
+  fi
 
   for shared_folder in "${prop_shared_folders[@]}"
   do
@@ -434,7 +446,7 @@ configureBoot2Docker()
   done
 
   bootlocalsh="${bootlocalsh}
-  sudo /usr/local/etc/init.d/nfs-client start"
+    sudo /usr/local/etc/init.d/nfs-client start"
 
   for shared_folder in "${prop_shared_folders[@]}"
   do
@@ -446,7 +458,7 @@ configureBoot2Docker()
 
   docker-machine ssh $prop_machine_name \
     "echo '$bootlocalsh' | sudo tee $file && sudo chmod +x $file && sync" < /dev/null > /dev/null
-
+  
   sleep 2
 
   echoSuccess "OK"
@@ -504,7 +516,7 @@ verifyNFSMount()
 # @info:    Displays the finish message
 showFinish()
 {
-  printf "\033[0;36m"
+  echo "\033[0;36m"
   echo "--------------------------------------------"
   echo
   echo " The docker-machine '$prop_machine_name'"
@@ -513,7 +525,7 @@ showFinish()
   echo " ENJOY high speed mounts :D"
   echo
   echo "--------------------------------------------"
-  printf "\033[0m"
+  echo "\033[0m"
 }
 
 # WSL
@@ -529,7 +541,7 @@ isWsl()
 }
 
 if [ "$(isWsl)" = "true" ]; then
-  printf "\033[0;32mPlaform WSl detected\033[0m\n"
+  echo "\033[0;32mPlaform WSl detected\033[0m\n"
 
 # @info:    translate docker-machine to .exe
   function docker-machine()

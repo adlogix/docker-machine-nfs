@@ -19,6 +19,7 @@ existing boot2docker box created through
 * [Setup Docker-machine for WSL](https://www.paraesthesia.com/archive/2018/09/20/docker-on-wsl-with-virtualbox-and-docker-machine/)
 * [Install haneWIN NFS server](https://hanewin.net/nfs-e.htm)
 * [Install `docker-machine-nfs`](#standalone)
+* Mount drives under root (e.g. `/c`) - [Can be configured in `/etc/wsl.conf` - `automount`](https://devblogs.microsoft.com/commandline/automatically-configuring-wsl/)
 * Tested with these attributes: `docker-machine-nfs MACHINE-NAME --shared-folder=/c/Users/ --mount-opts="rw,vers=3,tcp,nolock,noacl,async"`
 
 ## Install
@@ -95,6 +96,17 @@ Examples:
 
     > docker-machine will connect to your host machine via this address
 
+```
+
+## Troubleshooting
+
+- **Failed to mount on WSL**
+```
+Allow following exe's in "Windows Firewall" or any other firewall software used
+   Directory -- c:/Program Files/nfsd
+   -  pmapd.exe
+   -  nfssrv.exe
+   -  nfsd.exe
 ```
 
 ## Credits
