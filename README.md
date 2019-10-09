@@ -30,7 +30,7 @@ brew install docker-machine-nfs
 ## Supports
 
 * Virtualbox
-* Paralells
+* Parallels
 * VMware Fusion
 * VMware Vsphere
 * xhyve
