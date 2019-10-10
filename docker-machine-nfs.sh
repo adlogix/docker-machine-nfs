@@ -141,6 +141,17 @@ setPropDefaults()
   prop_timeout=
 }
 
+# @info:    Resolve APFS firmlinks to their actual location
+resolveHostPath()
+{
+  firmlinked_dir="/System/Volumes/Data$1"
+  if [ -d "$firmlinked_dir" ] ; then
+    echo $firmlinked_dir
+  else
+    echo $1
+  fi
+}
+
 # @info:    Parses and validates the CLI arguments
 parseCli()
 {
@@ -370,7 +381,7 @@ configureNFS()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     # Add new exports
-    exports="${exports}\"$shared_folder\" $machine_ip $prop_nfs_config\n"
+    exports="${exports}\"$(resolveHostPath "$shared_folder")\" $machine_ip $prop_nfs_config\n"
   done
 
   # Write new exports block ending
@@ -413,7 +424,7 @@ configureBoot2Docker()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     bootlocalsh="${bootlocalsh}
-    sudo mount -t nfs -o "$prop_mount_options" "$prop_nfshost_ip":\""$shared_folder"\" \""$shared_folder"\""
+    sudo mount -t nfs -o "$prop_mount_options" "$prop_nfshost_ip":\""$(resolveHostPath "$shared_folder")"\" \""$shared_folder"\""
   done
 
   local file="/var/lib/boot2docker/bootlocal.sh"
@@ -446,7 +457,7 @@ isNFSMounted()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo mount" |
-      grep "$prop_nfshost_ip:$prop_shared_folders on")
+      grep "$prop_nfshost_ip:$(resolveHostPath "$shared_folder") on")
     if [ "" = "$nfs_mount" ]; then
       echo "false";
       return;
