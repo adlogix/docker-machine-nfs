@@ -141,6 +141,17 @@ setPropDefaults()
   prop_timeout=
 }
 
+# @info:    Resolve APFS firmlinks to their actual location
+resolveHostPath()
+{
+  firmlinked_dir="/System/Volumes/Data$1"
+  if [ -d "$firmlinked_dir" ] ; then
+    echo $firmlinked_dir
+  else
+    echo $1
+  fi
+}
+
 # @info:    Parses and validates the CLI arguments
 parseCli()
 {
@@ -225,7 +236,9 @@ checkMachinePresence ()
 {
   echoInfo "machine presence ... \t\t\t"
 
-  if [ "" = "$(docker-machine ls $2 | sed 1d | grep -w "$1")" ]; then
+  machine_name=$(docker-machine ls $2 --filter "Name=^$1$" -q)
+
+  if [ "" = "${machine_name}" ]; then
     echoError "Could not find the machine '$1'!"; exit 1;
   fi
 
@@ -239,7 +252,7 @@ checkMachineRunning ()
 {
   echoInfo "machine running ... \t\t\t"
 
-  machine_state=$(docker-machine ls $2 | sed 1d | grep "^$1\s" | awk '{print $4}')
+  machine_state=$(docker-machine ls $2 --filter "Name=^$1$" --format "{{.State}}")
 
   if [ "Running" != "${machine_state}" ]; then
     echoError "The machine '$1' is not running but '${machine_state}'!";
@@ -254,7 +267,7 @@ checkMachineRunning ()
 # @return:  The driver used to create the machine
 getMachineDriver ()
 {
-  docker-machine ls $2 | sed 1d | grep "^$1\s" | awk '{print $3}'
+  docker-machine ls $2 --filter "Name=^$1$" --format "{{.DriverName}}"
 }
 
 # @info:    Loads mandatory properties from the docker machine
@@ -266,10 +279,9 @@ lookupMandatoryProperties ()
 
   prop_machine_driver=$(getMachineDriver $1 "$2")
 
-  if [ "$prop_machine_driver" = "vmwarefusion" ]; then
+  if [ "$prop_machine_driver" = "vmwarefusion" ] || [ "$prop_machine_driver" = "vmware" ]; then
     prop_network_id="Shared"
-    prop_nfshost_ip=${prop_use_ip:-"$(ifconfig -m `route get 8.8.8.8 | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')"}
-    prop_machine_ip=$prop_nfshost_ip
+    prop_nfshost_ip=${prop_use_ip:-"$(ifconfig -m `route get $prop_machine_ip | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')"}
     if [ "" = "${prop_nfshost_ip}" ]; then
       echoError "Could not find the vmware fusion net IP!"; exit 1
     fi
@@ -369,7 +381,7 @@ configureNFSUnix()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     # Add new exports
-    exports="${exports}\"$shared_folder\" $machine_ip $prop_nfs_config\n"
+    exports="${exports}\"$(resolveHostPath "$shared_folder")\" $machine_ip $prop_nfs_config\n"
   done
 
   # Write new exports block ending
@@ -439,7 +451,7 @@ configureBoot2Docker()
   for shared_folder in "${prop_shared_folders[@]}"
   do
     bootlocalsh="${bootlocalsh}
-    sudo mount -t nfs -o "$prop_mount_options" "$prop_nfshost_ip":\""$shared_folder"\" \""$shared_folder"\""
+    sudo mount -t nfs -o "$prop_mount_options" "$prop_nfshost_ip":\""$(resolveHostPath "$shared_folder")"\" \""$shared_folder"\""
   done
 
   local file="/var/lib/boot2docker/bootlocal.sh"
@@ -471,7 +483,8 @@ isNFSMounted()
 {
   for shared_folder in "${prop_shared_folders[@]}"
   do
-    local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo mount" < /dev/null | grep "$prop_nfshost_ip:$prop_shared_folders on")
+    local nfs_mount=$(docker-machine ssh $prop_machine_name "sudo mount" < /dev/null | 
+      grep "$prop_nfshost_ip:$(resolveHostPath "$shared_folder") on")
     if [ "" = "$nfs_mount" ]; then
       echo "false";
       return;
