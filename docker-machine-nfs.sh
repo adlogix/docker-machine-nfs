@@ -207,8 +207,14 @@ parseCli()
     esac
   done
 
+  if [ "$(isWsl)" = "true" ]; then
+    local default_shared_foder="/c/Users"
+  else
+    local default_shared_foder="/Users"
+  fi
+
   if [ ${#prop_shared_folders[@]} -eq 0 ]; then
-    prop_shared_folders+=("/Users")
+    prop_shared_folders+=("${default_shared_foder}")
   fi;
 
   echoInfo "Configuration:"
@@ -337,7 +343,7 @@ lookupMandatoryProperties ()
     echoError "Could not find the virtualbox net name!"; exit 1
   fi
 
-  prop_nfshost_ip=$(VBoxManage list hostonlyifs |
+  prop_nfshost_ip=$(VBoxManage list hostonlyifs |  tr -d '\r' |
     grep "${prop_network_id}" -A 3 | grep IPAddress |
     cut -d ':' -f2 | xargs);
   if [ "" = "${prop_nfshost_ip}" ]; then
@@ -435,9 +441,15 @@ configureBoot2Docker()
   # render bootlocal.sh and copy bootlocal.sh over to Docker Machine
   # (this will override an existing /var/lib/boot2docker/bootlocal.sh)
 
-  local bootlocalsh='#!/bin/sh
-  sudo umount /Users
-  sudo umount /c/Users'
+  local bootlocalsh="#!/bin/sh"
+
+  if [ "$(isWsl)" = "true" ]; then
+    bootlocalsh="${bootlocalsh}
+    sudo umount /c/Users"
+  else
+    bootlocalsh="${bootlocalsh}
+    sudo umount /Users"
+  fi
 
   for shared_folder in "${prop_shared_folders[@]}"
   do
@@ -446,7 +458,7 @@ configureBoot2Docker()
   done
 
   bootlocalsh="${bootlocalsh}
-  sudo /usr/local/etc/init.d/nfs-client start"
+    sudo /usr/local/etc/init.d/nfs-client start"
 
   for shared_folder in "${prop_shared_folders[@]}"
   do
