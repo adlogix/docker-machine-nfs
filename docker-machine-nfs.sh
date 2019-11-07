@@ -343,8 +343,8 @@ lookupMandatoryProperties ()
     echoError "Could not find the virtualbox net name!"; exit 1
   fi
 
-  prop_nfshost_ip=$(VBoxManage list hostonlyifs |  tr -d '\r' |
-    grep "${prop_network_id}" -A 3 | grep IPAddress |
+  prop_nfshost_ip=$(VBoxManage list hostonlyifs | tr -d '\r' |
+    grep "${prop_network_id}$" -A 3 | grep IPAddress |
     cut -d ':' -f2 | xargs);
   if [ "" = "${prop_nfshost_ip}" ]; then
     echoError "Could not find the virtualbox net IP!"; exit 1
@@ -470,7 +470,7 @@ configureBoot2Docker()
 
   docker-machine ssh $prop_machine_name \
     "echo '$bootlocalsh' | sudo tee $file && sudo chmod +x $file && sync" < /dev/null > /dev/null
-
+  
   sleep 2
 
   echoSuccess "OK"
