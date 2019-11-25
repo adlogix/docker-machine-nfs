@@ -88,7 +88,7 @@ Examples:
 
     > Configure the /var/www folder with NFS and the options '-alldirs -maproot=0'
 
-  $ docker-machine-nfs test --mount-opts="noacl,async,nolock,vers=3,udp,noatime,actimeo=1"
+  $ docker-machine-nfs test --mount-opts="noacl,async,nolock,nfsvers=3,udp,noatime,actimeo=1"
 
     > Configure the /User folder with NFS and specific mount options.
 

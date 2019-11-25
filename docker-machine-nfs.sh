@@ -57,7 +57,7 @@ Options:
   -f, --force               Force reconfiguration of nfs
   -n, --nfs-config          NFS configuration to use in /etc/exports. (default to '-alldirs -mapall=\$(id -u):\$(id -g)')
   -s, --shared-folder,...   Folder to share (default to /Users)
-  -m, --mount-opts          NFS mount options (default to 'noacl,async,vers=3')
+  -m, --mount-opts          NFS mount options (default to 'noacl,async,nfsvers=3')
   -i, --use-ip-range        Changes the nfs export ip to a range (e.g. -network 192.168.99.100 becomes -network 192.168.99)
   -p, --ip                  Configures the docker-machine to connect to your host machine via a specific ip address
   -t, --timeout             Configures how long the timeout should be for docker-machine commands
@@ -76,7 +76,7 @@ Examples:
 
     > Configure the /var/www folder with NFS and the options '-alldirs -maproot=0'
 
-  $ docker-machine-nfs test --mount-opts="noacl,async,nolock,vers=3,udp,noatime,actimeo=1"
+  $ docker-machine-nfs test --mount-opts="noacl,async,nolock,nfsvers=3,udp,noatime,actimeo=1"
 
     > Configure the /User folder with NFS and specific mount options.
 
@@ -135,7 +135,7 @@ setPropDefaults()
   prop_machine_name=
   prop_shared_folders=()
   prop_nfs_config="-alldirs -mapall="$(id -u):$(id -g)
-  prop_mount_options="noacl,async,vers=3"
+  prop_mount_options="noacl,async,nfsvers=3"
   prop_force_configuration_nfs=false
   prop_use_ip_range=false
   prop_timeout=
