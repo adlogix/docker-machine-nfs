@@ -1,14 +1,26 @@
 # Docker Machine NFS
 
+## Requirements
+
+* [Docker Machine](https://docs.docker.com/machine/) 0.5.0+
+
+## Mac OS X 10.9+
+
 Activates [NFS](https://en.wikipedia.org/wiki/Network_File_System) for an
 existing boot2docker box created through
 [Docker Machine](https://docs.docker.com/machine/).
 
-## Requirements
 :warning: There can be an issue with the NFS under Mac OS X High Sierra (see issue [#79](https://github.com/adlogix/docker-machine-nfs/issues/79) for more info) :warning:
 
-* Mac OS X 10.9+
-* [Docker Machine](https://docs.docker.com/machine/) 0.5.0+
+## Windows 10 with WSL
+
+* [Install WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+* [Install VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+* [Setup Docker-machine for WSL](https://www.paraesthesia.com/archive/2018/09/20/docker-on-wsl-with-virtualbox-and-docker-machine/)
+* [Install haneWIN NFS server](https://hanewin.net/nfs-e.htm)
+* [Install `docker-machine-nfs`](#standalone)
+* Mount drives under root (e.g. `/c`) - [Can be configured in `/etc/wsl.conf` - `automount`](https://devblogs.microsoft.com/commandline/automatically-configuring-wsl/)
+* Tested with these attributes: `docker-machine-nfs MACHINE-NAME --shared-folder=/c/Users/ --mount-opts="rw,vers=3,tcp,nolock,noacl,async"`
 
 ## Install
 
@@ -36,6 +48,9 @@ brew install docker-machine-nfs
 * xhyve
 
 ## Usage
+
+* Create `docker-machine` as usual
+* Run `docker-machine-nfs`
 
 ```sh
 
@@ -73,7 +88,7 @@ Examples:
 
     > Configure the /var/www folder with NFS and the options '-alldirs -maproot=0'
 
-  $ docker-machine-nfs test --mount-opts="noacl,async,nolock,vers=3,udp,noatime,actimeo=1"
+  $ docker-machine-nfs test --mount-opts="noacl,async,nolock,nfsvers=3,udp,noatime,actimeo=1"
 
     > Configure the /User folder with NFS and specific mount options.
 
@@ -83,7 +98,19 @@ Examples:
 
 ```
 
+## Troubleshooting
+
+- **Failed to mount on WSL**
+```
+Allow following exe's in "Windows Firewall" or any other firewall software used
+   Directory -- c:/Program Files/nfsd
+   -  pmapd.exe
+   -  nfssrv.exe
+   -  nfsd.exe
+```
+
 ## Credits
 
-Heavily inspired by @[mattes](https://github.com/mattes) ruby version
+* Heavily inspired by @[mattes](https://github.com/mattes) ruby version
 [boot2docker-nfs.rb](https://gist.github.com/mattes/4d7f435d759ca2581347).
+* @[DzeryCZ](https://github.com/DzeryCZ) added support for Windows with WSL
