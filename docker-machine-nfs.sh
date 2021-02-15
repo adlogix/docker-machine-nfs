@@ -310,7 +310,7 @@ lookupMandatoryProperties ()
     return
   fi
 
-  if [[ "$prop_machine_driver" =~ (xhyve|vmwarevsphere) ]]; then
+  if [[ "$prop_machine_driver" =~ (xhyve|hyperkit|vmwarevsphere) ]]; then
     prop_network_id="Shared"
     prop_nfshost_ip=${prop_use_ip:-"$(ifconfig -m `route get $prop_machine_ip | awk '{if ($1 ~ /interface:/){print $2}}'` | awk 'sub(/inet /,""){print $1}')"}
     if [ "" = "${prop_nfshost_ip}" ]; then
