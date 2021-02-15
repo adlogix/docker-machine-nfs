@@ -45,7 +45,8 @@ brew install docker-machine-nfs
 * Parallels
 * VMware Fusion
 * VMware Vsphere
-* xhyve
+* Xhyve
+* Hyperkit
 
 ## Usage
 
